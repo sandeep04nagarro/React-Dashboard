@@ -5,6 +5,10 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 ## Features
 
 - Add, complete, and delete todos
+- Edit existing todos (text + notes) inline, with Enter to save / Esc to cancel
+- Duplicate a todo to create a fresh copy
+- Notes / description field per task
+- Creation and completion timestamps per task
 - Filter by All / Active / Completed
 - Clear all completed todos at once
 - Live item counter

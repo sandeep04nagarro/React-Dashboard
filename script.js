@@ -58,10 +58,36 @@
   const uid = () =>
     Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+  function formatTs(ts) {
+    if (!ts) return "";
+    try {
+      return new Date(ts).toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function nowTs() {
+    return new Date().toISOString();
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      todos = raw ? JSON.parse(raw) : [];
+      const parsed = raw ? JSON.parse(raw) : [];
+      todos = parsed.map((t) => ({
+        id: t.id || uid(),
+        text: t.text || "",
+        notes: typeof t.notes === "string" ? t.notes : "",
+        completed: !!t.completed,
+        createdAt: t.createdAt || nowTs(),
+        completedAt: t.completed ? t.completedAt || null : null,
+      }));
     } catch (e) {
       todos = [];
     }
@@ -72,7 +98,14 @@
   }
 
   function addTodo(text) {
-    todos.unshift({ id: uid(), text, completed: false });
+    todos.unshift({
+      id: uid(),
+      text,
+      notes: "",
+      completed: false,
+      createdAt: nowTs(),
+      completedAt: null,
+    });
     save();
     render();
   }
@@ -81,9 +114,36 @@
     const todo = todos.find((t) => t.id === id);
     if (todo) {
       todo.completed = !todo.completed;
+      todo.completedAt = todo.completed ? nowTs() : null;
       save();
       render();
     }
+  }
+
+  function editTodo(id, text, notes) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    todo.text = text.trim();
+    if (typeof notes === "string") todo.notes = notes.trim();
+    save();
+    render();
+  }
+
+  function duplicateTodo(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    const copy = {
+      id: uid(),
+      text: todo.text,
+      notes: todo.notes || "",
+      completed: false,
+      createdAt: nowTs(),
+      completedAt: null,
+    };
+    const idx = todos.findIndex((t) => t.id === id);
+    todos.splice(idx, 0, copy);
+    save();
+    render();
   }
 
   function deleteTodo(id) {
@@ -104,6 +164,39 @@
     return todos;
   }
 
+  function startEdit(item, todo) {
+    const editEl = item.querySelector(".todo-item__edit");
+    const notesEl = item.querySelector(".todo-item__notes");
+    item.classList.add("is-editing");
+    editEl.querySelector(".todo-item__edit-input").value = todo.text;
+    editEl.querySelector(".todo-item__edit-notes").value = todo.notes || "";
+    editEl.querySelector(".todo-item__edit-input").focus();
+    notesEl.classList.add("is-hidden");
+  }
+
+  function cancelEdit(item) {
+    item.classList.remove("is-editing");
+    const todo = todos.find((t) => t.id === item.dataset.id);
+    if (todo && todo.notes) {
+      item
+        .querySelector(".todo-item__notes")
+        .classList.remove("is-hidden");
+    }
+  }
+
+  function saveEdit(item, todo) {
+    const text = item.querySelector(".todo-item__edit-input").value.trim();
+    if (!text) return;
+    const notes = item.querySelector(".todo-item__edit-notes").value;
+    editTodo(todo.id, text, notes);
+  }
+
+  function toggleNotes(item, todo) {
+    item
+      .querySelector(".todo-item__notes")
+      .classList.toggle("is-hidden");
+  }
+
   function render() {
     list.innerHTML = "";
     const visible = filtered();
@@ -118,9 +211,59 @@
       checkbox.addEventListener("change", () => toggleTodo(todo.id));
 
       item.querySelector(".todo-item__text").textContent = todo.text;
+
+      const meta = item.querySelector(".todo-item__meta");
+      const createdSpan = meta.querySelector(".todo-item__created");
+      createdSpan.title = new Date(todo.createdAt).toLocaleString();
+      createdSpan.textContent = "Created: " + formatTs(todo.createdAt);
+      if (todo.completed && todo.completedAt) {
+        const comp = meta.querySelector(".todo-item__completed");
+        comp.title = new Date(todo.completedAt).toLocaleString();
+        comp.textContent = "Completed: " + formatTs(todo.completedAt);
+      } else {
+        meta.querySelector(".todo-item__completed").remove();
+      }
+
+      const notesEl = item.querySelector(".todo-item__notes");
+      notesEl.textContent = todo.notes || "";
+      if (!todo.notes) notesEl.classList.add("is-hidden");
+
+      item
+        .querySelector(".todo-item__edit-btn")
+        .addEventListener("click", () => startEdit(item, todo));
+
+      item
+        .querySelector(".todo-item__duplicate")
+        .addEventListener("click", () => duplicateTodo(todo.id));
+
+      item
+        .querySelector(".todo-item__notes-toggle")
+        .addEventListener("click", () => toggleNotes(item, todo));
+
       item
         .querySelector(".todo-item__delete")
         .addEventListener("click", () => deleteTodo(todo.id));
+
+      item
+        .querySelector(".todo-item__save")
+        .addEventListener("click", () => saveEdit(item, todo));
+
+      item
+        .querySelector(".todo-item__cancel")
+        .addEventListener("click", () => cancelEdit(item));
+
+      const editForm = item.querySelector(".todo-item__edit");
+      editForm
+        .querySelector(".todo-item__edit-input")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            saveEdit(item, todo);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            cancelEdit(item);
+          }
+        });
 
       list.appendChild(item);
     });
