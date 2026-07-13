@@ -2,6 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "todo-app:todos";
+  const THEME_KEY = "todo-app:theme";
   let todos = [];
   let currentFilter = "all";
 
@@ -13,6 +14,46 @@
   const itemsLeft = $("items-left");
   const clearCompleted = $("clear-completed");
   const template = $("todo-item-template");
+  const themeToggle = $("theme-toggle");
+
+  const root = document.documentElement;
+
+  function currentTheme() {
+    return root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    const isDark = theme === "dark";
+    themeToggle.setAttribute("aria-pressed", String(isDark));
+    themeToggle.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+  }
+
+  function initTheme() {
+    let theme = "light";
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "dark" || saved === "light") {
+        theme = saved;
+      } else if (
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+        theme = "dark";
+      }
+    } catch (e) {
+      theme = "light";
+    }
+    applyTheme(theme);
+  }
+
+  themeToggle.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch (e) {}
+  });
 
   const uid = () =>
     Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -122,6 +163,7 @@
     });
   });
 
+  initTheme();
   load();
   render();
 })();
