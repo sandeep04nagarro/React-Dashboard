@@ -125,16 +125,39 @@
 
     <template id="todo-item-template">
       <li class="todo-item">
-        <label class="todo-item__label">
-          <input type="checkbox" class="todo-item__checkbox" />
-          <span class="todo-item__text"></span>
-          <span class="todo-item__meta">
-            <span class="todo-item__badge todo-item__badge--priority"></span>
-            <span class="todo-item__badge todo-item__badge--category"></span>
-            <span class="todo-item__badge todo-item__badge--due"></span>
-          </span>
-        </label>
-        <button class="todo-item__delete" type="button" aria-label="Delete todo">&times;</button>
+        <div class="todo-item__main">
+          <label class="todo-item__label">
+            <input type="checkbox" class="todo-item__checkbox" />
+            <span class="todo-item__text"></span>
+            <span class="todo-item__meta">
+              <span class="todo-item__badge todo-item__badge--priority"></span>
+              <span class="todo-item__badge todo-item__badge--category"></span>
+              <span class="todo-item__badge todo-item__badge--due"></span>
+            </span>
+          </label>
+          <div class="todo-item__actions">
+            <button class="todo-item__icon-btn todo-item__edit-btn" type="button" aria-label="Edit todo" title="Edit">&#9998;</button>
+            <button class="todo-item__icon-btn todo-item__notes-toggle" type="button" aria-label="Toggle notes" title="Notes">&#9776;</button>
+            <button class="todo-item__icon-btn todo-item__duplicate" type="button" aria-label="Duplicate todo" title="Duplicate">&#10697;</button>
+            <button class="todo-item__icon-btn todo-item__delete" type="button" aria-label="Delete todo" title="Delete">&times;</button>
+          </div>
+        </div>
+
+        <div class="todo-item__meta">
+          <span class="todo-item__created"></span>
+          <span class="todo-item__completed"></span>
+        </div>
+
+        <p class="todo-item__notes"></p>
+
+        <div class="todo-item__edit" role="group" aria-label="Edit todo">
+          <input type="text" class="todo-item__edit-input" aria-label="Todo text" />
+          <textarea class="todo-item__edit-notes" rows="2" placeholder="Notes / description"></textarea>
+          <div class="todo-item__edit-actions">
+            <button class="todo-item__save" type="button">Save</button>
+            <button class="todo-item__cancel" type="button">Cancel</button>
+          </div>
+        </div>
       </li>
     </template>
 

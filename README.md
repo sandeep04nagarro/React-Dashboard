@@ -9,6 +9,10 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Search bar to filter tasks by text
 - Filter tasks by priority and category
 - Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z)
+- Edit existing todos (text + notes) inline, with Enter to save / Esc to cancel
+- Duplicate a todo to create a fresh copy
+- Notes / description field per task
+- Creation and completion timestamps per task
 - Filter by All / Active / Completed
 - Overdue tasks (due date passed, not completed) are highlighted in red
 - Clear all completed todos at once
