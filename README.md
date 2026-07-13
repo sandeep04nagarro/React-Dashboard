@@ -5,7 +5,12 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 ## Features
 
 - Add, complete, and delete todos
+- Each todo has a priority (low/medium/high), category, and optional due date
+- Search bar to filter tasks by text
+- Filter tasks by priority and category
+- Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z)
 - Filter by All / Active / Completed
+- Overdue tasks (due date passed, not completed) are highlighted in red
 - Clear all completed todos at once
 - Live item counter
 - Dark / light mode toggle (remembers your choice and respects system preference)
