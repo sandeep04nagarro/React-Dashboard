@@ -102,6 +102,8 @@
         priority: PRIORITIES.includes(t.priority) ? t.priority : "medium",
         category: typeof t.category === "string" && t.category ? t.category : "general",
         dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
+        favorite: !!t.favorite,
+        pinned: !!t.pinned,
         createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
         completedAt: t.completed ? t.completedAt || null : null,
       }));
@@ -123,11 +125,31 @@
       priority: prioritySelect.value,
       category: categorySelect.value,
       dueDate: dueInput.value || "",
+      favorite: false,
+      pinned: false,
       createdAt: Date.now(),
       completedAt: null
     });
     save();
     render();
+  }
+
+  function toggleFavorite(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (todo) {
+      todo.favorite = !todo.favorite;
+      save();
+      render();
+    }
+  }
+
+  function togglePin(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (todo) {
+      todo.pinned = !todo.pinned;
+      save();
+      render();
+    }
   }
 
   function toggleTodo(id) {
@@ -157,6 +179,8 @@
       text: todo.text,
       notes: todo.notes || "",
       completed: false,
+      favorite: !!todo.favorite,
+      pinned: !!todo.pinned,
       createdAt: nowTs(),
       completedAt: null,
     };
@@ -190,6 +214,8 @@
 
     if (currentFilter === "active") result = result.filter((t) => !t.completed);
     else if (currentFilter === "completed") result = result.filter((t) => t.completed);
+    else if (currentFilter === "favorites") result = result.filter((t) => t.favorite);
+    else if (currentFilter === "pinned") result = result.filter((t) => t.pinned);
 
     if (currentSearch) {
       const q = currentSearch.toLowerCase();
@@ -228,6 +254,8 @@
         result.sort((a, b) => a.text.localeCompare(b.text));
         break;
     }
+
+    result.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
     return result;
   }
@@ -288,12 +316,26 @@
       item.dataset.id = todo.id;
       item.classList.toggle("is-completed", todo.completed);
       item.classList.toggle("is-overdue", isOverdue(todo));
+      item.classList.toggle("is-pinned", todo.pinned);
+      item.classList.toggle("is-favorite", todo.favorite);
 
       const checkbox = item.querySelector(".todo-item__checkbox");
       checkbox.checked = todo.completed;
       checkbox.addEventListener("change", () => toggleTodo(todo.id));
 
       item.querySelector(".todo-item__text").textContent = todo.text;
+
+      const starBtn = item.querySelector(".todo-item__star");
+      starBtn.classList.toggle("is-active", todo.favorite);
+      starBtn.setAttribute("aria-pressed", String(todo.favorite));
+      starBtn.title = todo.favorite ? "Unstar task" : "Star task";
+      starBtn.addEventListener("click", () => toggleFavorite(todo.id));
+
+      const pinBtn = item.querySelector(".todo-item__pin");
+      pinBtn.classList.toggle("is-active", todo.pinned);
+      pinBtn.setAttribute("aria-pressed", String(todo.pinned));
+      pinBtn.title = todo.pinned ? "Unpin task" : "Pin task";
+      pinBtn.addEventListener("click", () => togglePin(todo.id));
 
       const priorityBadge = item.querySelector(".todo-item__badge--priority");
       priorityBadge.textContent = todo.priority;

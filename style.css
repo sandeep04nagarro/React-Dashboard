@@ -216,6 +216,10 @@ body {
 }
 .todo-item__icon-btn:hover { color: var(--text); background: rgba(107, 114, 128, 0.12); }
 .todo-item__icon-btn.todo-item__delete:hover { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+.todo-item__star.is-active { color: #f5b400; }
+.todo-item__star.is-active:hover { color: #d99a00; background: rgba(245, 180, 0, 0.12); }
+.todo-item__pin.is-active { color: var(--primary); }
+.todo-item__pin.is-active:hover { color: var(--primary-hover); background: rgba(79, 70, 229, 0.12); }
 .todo-item__checkbox { width: 1.15rem; height: 1.15rem; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
 .todo-item__text {
   font-size: 1rem;
@@ -246,6 +250,14 @@ body {
 }
 .todo-item.is-overdue .todo-item__text { color: var(--danger); font-weight: 600; }
 .todo-item.is-overdue.is-completed .todo-item__text { color: var(--muted); font-weight: 400; }
+.todo-item.is-pinned {
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--primary);
+  margin-left: -0.35rem;
+  background: rgba(79, 70, 229, 0.04);
+}
+.todo-item.is-pinned.is-overdue { border-left: 3px solid var(--danger); }
+.todo-item.is-favorite .todo-item__text { font-weight: 600; }
 .todo-item__delete {
   font-size: 1.4rem;
   line-height: 1;
