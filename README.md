@@ -6,11 +6,12 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 
 - Add, complete, and delete todos
 - Each todo has a priority (low/medium/high), category, and optional due date
+- Star/favorite tasks and pin important tasks to the top
 - Search bar to filter tasks by text
-- Filter tasks by priority and category
-- Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z)
+- Filter tasks by priority and category, or by favorites / pinned
+- Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z; pinned always float first)
 - Edit existing todos (text + notes) inline, with Enter to save / Esc to cancel
-- Duplicate a todo to create a fresh copy
+- Duplicate a todo to create a fresh copy (carries favorite/pinned state)
 - Notes / description field per task
 - Creation and completion timestamps per task
 - Filter by All / Active / Completed

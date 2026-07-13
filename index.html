@@ -111,6 +111,8 @@
         <button class="filters__btn is-active" data-filter="all" aria-selected="true">All</button>
         <button class="filters__btn" data-filter="active" aria-selected="false">Active</button>
         <button class="filters__btn" data-filter="completed" aria-selected="false">Completed</button>
+        <button class="filters__btn" data-filter="favorites" aria-selected="false">Favorites</button>
+        <button class="filters__btn" data-filter="pinned" aria-selected="false">Pinned</button>
       </nav>
 
       <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
@@ -136,6 +138,8 @@
             </span>
           </label>
           <div class="todo-item__actions">
+            <button class="todo-item__icon-btn todo-item__star" type="button" aria-pressed="false" title="Star">&#9734;</button>
+            <button class="todo-item__icon-btn todo-item__pin" type="button" aria-pressed="false" title="Pin">&#128204;</button>
             <button class="todo-item__icon-btn todo-item__edit-btn" type="button" aria-label="Edit todo" title="Edit">&#9998;</button>
             <button class="todo-item__icon-btn todo-item__notes-toggle" type="button" aria-label="Toggle notes" title="Notes">&#9776;</button>
             <button class="todo-item__icon-btn todo-item__duplicate" type="button" aria-label="Duplicate todo" title="Duplicate">&#10697;</button>
