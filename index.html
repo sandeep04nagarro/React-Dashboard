@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <h1 class="app__title">Todo App</h1>
+        <p class="app__subtitle">Built with vanilla HTML, CSS & JS</p>
+      </header>
+
+      <form id="todo-form" class="todo-form" autocomplete="off">
+        <input
+          id="todo-input"
+          class="todo-form__input"
+          type="text"
+          placeholder="What needs to be done?"
+          aria-label="New todo"
+          required
+        />
+        <button class="todo-form__add" type="submit">Add</button>
+      </form>
+
+      <nav class="filters" aria-label="Filter todos">
+        <button class="filters__btn is-active" data-filter="all" aria-selected="true">All</button>
+        <button class="filters__btn" data-filter="active" aria-selected="false">Active</button>
+        <button class="filters__btn" data-filter="completed" aria-selected="false">Completed</button>
+      </nav>
+
+      <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
+
+      <p id="empty-state" class="empty-state" role="status">No todos yet. Add one above!</p>
+
+      <footer class="app__footer">
+        <span id="items-left" class="app__count">0 items left</span>
+        <button id="clear-completed" class="app__clear" type="button" disabled>Clear completed</button>
+      </footer>
+    </main>
+
+    <template id="todo-item-template">
+      <li class="todo-item">
+        <label class="todo-item__label">
+          <input type="checkbox" class="todo-item__checkbox" />
+          <span class="todo-item__text"></span>
+        </label>
+        <button class="todo-item__delete" type="button" aria-label="Delete todo">&times;</button>
+      </li>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
