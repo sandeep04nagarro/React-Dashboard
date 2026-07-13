@@ -8,6 +8,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Filter by All / Active / Completed
 - Clear all completed todos at once
 - Live item counter
+- Dark / light mode toggle (remembers your choice and respects system preference)
 - Persists to localStorage (survives page refresh)
 - Responsive layout for desktop and mobile
 

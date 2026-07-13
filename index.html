@@ -5,11 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo App</title>
     <link rel="stylesheet" href="style.css" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("todo-app:theme");
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (saved === "dark" || (!saved && prefersDark)) {
+            document.documentElement.setAttribute("data-theme", "dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <main class="app">
       <header class="app__header">
-        <h1 class="app__title">Todo App</h1>
+        <div class="app__heading">
+          <h1 class="app__title">Todo App</h1>
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+            <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
+            <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
+          </button>
+        </div>
         <p class="app__subtitle">Built with vanilla HTML, CSS & JS</p>
       </header>
 
