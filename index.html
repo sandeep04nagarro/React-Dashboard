@@ -119,6 +119,23 @@
 
       <p id="empty-state" class="empty-state" role="status">No todos yet. Add one above!</p>
 
+      <section id="progress" class="progress" aria-label="Completion progress">
+        <div class="progress__header">
+          <span id="progress-text" class="progress__text">Completed: 0 / 0</span>
+          <span id="progress-percent" class="progress__percent">0%</span>
+        </div>
+        <div
+          class="progress__track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          aria-label="Completion percentage"
+        >
+          <div id="progress-fill" class="progress__fill"></div>
+        </div>
+      </section>
+
       <footer class="app__footer">
         <span id="items-left" class="app__count">0 items left</span>
         <button id="clear-completed" class="app__clear" type="button" disabled>Clear completed</button>
