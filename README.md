@@ -18,6 +18,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Overdue tasks (due date passed, not completed) are highlighted in red
 - Clear all completed todos at once
 - Live item counter
+- Progress bar that displays completion percentage (e.g. "Completed: 8 / 12" with a visual bar)
 - Dark / light mode toggle (remembers your choice and respects system preference)
 - Persists to localStorage (survives page refresh)
 - Responsive layout for desktop and mobile

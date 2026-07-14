@@ -22,6 +22,10 @@
   const list = $("todo-list");
   const emptyState = $("empty-state");
   const itemsLeft = $("items-left");
+  const progressText = $("progress-text");
+  const progressPercent = $("progress-percent");
+  const progressTrack = document.querySelector(".progress__track");
+  const progressFill = $("progress-fill");
   const clearCompleted = $("clear-completed");
   const template = $("todo-item-template");
   const themeToggle = $("theme-toggle");
@@ -416,6 +420,17 @@
       if (currentSearch) parts.push('matching "' + currentSearch + '"');
       if (currentFilter !== "all") parts.push(currentFilter);
       emptyState.textContent = "No " + (parts.join(" / ") || currentFilter) + " todos.";
+    }
+
+    const total = todos.length;
+    const completed = todos.filter((t) => t.completed).length;
+    const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    progressText.textContent = "Completed: " + completed + " / " + total;
+    progressPercent.textContent = percent + "%";
+    progressFill.style.width = percent + "%";
+    if (progressTrack) {
+      progressTrack.setAttribute("aria-valuenow", String(percent));
     }
 
     const remaining = todos.filter((t) => !t.completed).length;
