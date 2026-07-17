@@ -181,6 +181,7 @@
     }
   }
 
+  // color is an optional label value ("" or one of COLOR_MAP keys); invalid values fall back to "".
   function editTodo(id, text, notes, color) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
