@@ -67,6 +67,21 @@
           type="date"
           aria-label="Due date"
         />
+        <select id="todo-recurrence" class="todo-form__select" aria-label="Recurrence">
+          <option value="" selected>Does not repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input
+          id="todo-recurrence-custom"
+          class="todo-form__date todo-form__recurrence-custom"
+          type="number"
+          min="1"
+          value="1"
+          aria-label="Custom recurrence interval in days"
+        />
         <button class="todo-form__add" type="submit">Add</button>
       </form>
 
@@ -161,6 +176,7 @@
               <span class="todo-item__badge todo-item__badge--priority"></span>
               <span class="todo-item__badge todo-item__badge--category"></span>
               <span class="todo-item__badge todo-item__badge--due"></span>
+              <span class="todo-item__badge todo-item__badge--recurrence"></span>
             </span>
           </label>
           <div class="todo-item__actions">
@@ -191,6 +207,14 @@
             <option value="yellow">🟡 Urgent</option>
             <option value="purple">🟣 Other</option>
           </select>
+          <select class="todo-item__edit-recurrence" aria-label="Recurrence">
+            <option value="">Does not repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <input type="number" class="todo-item__edit-recurrence-custom" min="1" value="1" aria-label="Custom recurrence interval in days" />
           <div class="todo-item__edit-actions">
             <button class="todo-item__save" type="button">Save</button>
             <button class="todo-item__cancel" type="button">Cancel</button>
