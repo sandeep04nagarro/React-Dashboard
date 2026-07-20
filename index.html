@@ -53,6 +53,14 @@
           <option value="shopping">Shopping</option>
           <option value="health">Health</option>
         </select>
+        <select id="todo-color" class="todo-form__select" aria-label="Color label">
+          <option value="" selected>No color</option>
+          <option value="red">🔴 Work</option>
+          <option value="green">🟢 Personal</option>
+          <option value="blue">🔵 Study</option>
+          <option value="yellow">🟡 Urgent</option>
+          <option value="purple">🟣 Other</option>
+        </select>
         <input
           id="todo-due"
           class="todo-form__date"
@@ -149,6 +157,7 @@
             <input type="checkbox" class="todo-item__checkbox" />
             <span class="todo-item__text"></span>
             <span class="todo-item__meta">
+              <span class="todo-item__badge todo-item__badge--color"></span>
               <span class="todo-item__badge todo-item__badge--priority"></span>
               <span class="todo-item__badge todo-item__badge--category"></span>
               <span class="todo-item__badge todo-item__badge--due"></span>
@@ -174,6 +183,14 @@
         <div class="todo-item__edit" role="group" aria-label="Edit todo">
           <input type="text" class="todo-item__edit-input" aria-label="Todo text" />
           <textarea class="todo-item__edit-notes" rows="2" placeholder="Notes / description"></textarea>
+          <select class="todo-item__edit-color" aria-label="Color label">
+            <option value="">No color</option>
+            <option value="red">🔴 Work</option>
+            <option value="green">🟢 Personal</option>
+            <option value="blue">🔵 Study</option>
+            <option value="yellow">🟡 Urgent</option>
+            <option value="purple">🟣 Other</option>
+          </select>
           <div class="todo-item__edit-actions">
             <button class="todo-item__save" type="button">Save</button>
             <button class="todo-item__cancel" type="button">Cancel</button>

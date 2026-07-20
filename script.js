@@ -13,11 +13,24 @@
   const PRIORITIES = ["low", "medium", "high"];
   const PRIORITY_RANK = { low: 0, medium: 1, high: 2 };
 
+  const COLORS = [
+    { value: "red", emoji: "🔴", label: "Work" },
+    { value: "green", emoji: "🟢", label: "Personal" },
+    { value: "blue", emoji: "🔵", label: "Study" },
+    { value: "yellow", emoji: "🟡", label: "Urgent" },
+    { value: "purple", emoji: "🟣", label: "Other" },
+  ];
+  const COLOR_MAP = COLORS.reduce((acc, c) => {
+    acc[c.value] = c;
+    return acc;
+  }, {});
+
   const $ = (id) => document.getElementById(id);
   const form = $("todo-form");
   const input = $("todo-input");
   const prioritySelect = $("todo-priority");
   const categorySelect = $("todo-category");
+  const colorSelect = $("todo-color");
   const dueInput = $("todo-due");
   const list = $("todo-list");
   const emptyState = $("empty-state");
@@ -105,6 +118,7 @@
         completed: !!t.completed,
         priority: PRIORITIES.includes(t.priority) ? t.priority : "medium",
         category: typeof t.category === "string" && t.category ? t.category : "general",
+        color: typeof t.color === "string" && COLOR_MAP[t.color] ? t.color : "",
         dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
         favorite: !!t.favorite,
         pinned: !!t.pinned,
@@ -128,6 +142,7 @@
       completed: false,
       priority: prioritySelect.value,
       category: categorySelect.value,
+      color: colorSelect.value || "",
       dueDate: dueInput.value || "",
       favorite: false,
       pinned: false,
@@ -166,11 +181,13 @@
     }
   }
 
-  function editTodo(id, text, notes) {
+  // color is an optional label value ("" or one of COLOR_MAP keys); invalid values fall back to "".
+  function editTodo(id, text, notes, color) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     todo.text = text.trim();
     if (typeof notes === "string") todo.notes = notes.trim();
+    if (typeof color === "string") todo.color = COLOR_MAP[color] ? color : "";
     save();
     render();
   }
@@ -185,6 +202,7 @@
       completed: false,
       favorite: !!todo.favorite,
       pinned: !!todo.pinned,
+      color: todo.color || "",
       createdAt: nowTs(),
       completedAt: null,
     };
@@ -284,6 +302,7 @@
     item.classList.add("is-editing");
     editEl.querySelector(".todo-item__edit-input").value = todo.text;
     editEl.querySelector(".todo-item__edit-notes").value = todo.notes || "";
+    editEl.querySelector(".todo-item__edit-color").value = todo.color || "";
     editEl.querySelector(".todo-item__edit-input").focus();
     notesEl.classList.add("is-hidden");
   }
@@ -302,7 +321,8 @@
     const text = item.querySelector(".todo-item__edit-input").value.trim();
     if (!text) return;
     const notes = item.querySelector(".todo-item__edit-notes").value;
-    editTodo(todo.id, text, notes);
+    const color = item.querySelector(".todo-item__edit-color").value;
+    editTodo(todo.id, text, notes, color);
   }
 
   function toggleNotes(item, todo) {
@@ -346,6 +366,15 @@
       priorityBadge.classList.add("is-" + todo.priority);
 
       item.querySelector(".todo-item__badge--category").textContent = todo.category;
+
+      const colorBadge = item.querySelector(".todo-item__badge--color");
+      if (todo.color && COLOR_MAP[todo.color]) {
+        const c = COLOR_MAP[todo.color];
+        colorBadge.textContent = c.emoji + " " + c.label;
+        colorBadge.classList.add("is-" + c.value);
+      } else {
+        colorBadge.remove();
+      }
 
       const dueBadge = item.querySelector(".todo-item__badge--due");
       if (todo.dueDate) {
@@ -448,6 +477,7 @@
     addTodo(text);
     input.value = "";
     dueInput.value = "";
+    colorSelect.value = "";
     input.focus();
   });
 

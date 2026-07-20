@@ -5,8 +5,9 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 ## Features
 
 - Add, complete, and delete todos
-- Each todo has a priority (low/medium/high), category, and optional due date
+- Each todo has a priority (low/medium/high), category, optional colored label, and optional due date
 - Star/favorite tasks and pin important tasks to the top
+- Assign a color label to tasks (e.g. 🔴 Work, 🟢 Personal, 🔵 Study), shown as a colored badge and editable inline
 - Search bar to filter tasks by text
 - Filter tasks by priority and category, or by favorites / pinned
 - Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z; pinned always float first)

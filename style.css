@@ -242,6 +242,27 @@ body {
 .todo-item__badge--priority.is-medium { color: var(--primary); border-color: var(--primary); }
 .todo-item__badge--priority.is-low { color: var(--success); border-color: var(--success); }
 .todo-item__badge--due.is-overdue { color: #fff; background: var(--danger); border-color: var(--danger); }
+.todo-item__badge--color { text-transform: none; letter-spacing: 0; }
+.todo-item__badge--color.is-red { color: #b91c1c; border-color: #fca5a5; background: #fef2f2; }
+.todo-item__badge--color.is-green { color: #15803d; border-color: #86efac; background: #f0fdf4; }
+.todo-item__badge--color.is-blue { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
+.todo-item__badge--color.is-yellow { color: #a16207; border-color: #fde047; background: #fefce8; }
+.todo-item__badge--color.is-purple { color: #7e22ce; border-color: #d8b4fe; background: #faf5ff; }
+[data-theme="dark"] .todo-item__badge--color.is-red { color: #fca5a5; border-color: #7f1d1d; background: #2a1414; }
+[data-theme="dark"] .todo-item__badge--color.is-green { color: #86efac; border-color: #14532d; background: #11231a; }
+[data-theme="dark"] .todo-item__badge--color.is-blue { color: #93c5fd; border-color: #1e3a8a; background: #131e33; }
+[data-theme="dark"] .todo-item__badge--color.is-yellow { color: #fde047; border-color: #713f12; background: #261f0a; }
+[data-theme="dark"] .todo-item__badge--color.is-purple { color: #d8b4fe; border-color: #581c87; background: #1f1429; }
+.todo-item__edit-color {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+}
 .todo-item.is-completed .todo-item__text { color: var(--muted); text-decoration: line-through; }
 .todo-item.is-overdue {
   padding-left: 0.6rem;
