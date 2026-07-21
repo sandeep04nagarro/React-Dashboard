@@ -114,6 +114,11 @@ body {
 }
 .todo-form__select:focus,
 .todo-form__date:focus { border-color: var(--primary); }
+.todo-form__recurrence-custom {
+  flex: 0 0 90px;
+  cursor: text;
+}
+.todo-form__recurrence-custom.is-hidden { display: none; }
 .todo-form__add {
   padding: 0.7rem 1.1rem;
   font-size: 1rem;
@@ -242,6 +247,13 @@ body {
 .todo-item__badge--priority.is-medium { color: var(--primary); border-color: var(--primary); }
 .todo-item__badge--priority.is-low { color: var(--success); border-color: var(--success); }
 .todo-item__badge--due.is-overdue { color: #fff; background: var(--danger); border-color: var(--danger); }
+.todo-item__badge--recurrence {
+  color: var(--primary);
+  border-color: var(--primary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+[data-theme="dark"] .todo-item__badge--recurrence { color: var(--primary); border-color: var(--primary); }
 .todo-item__badge--color { text-transform: none; letter-spacing: 0; }
 .todo-item__badge--color.is-red { color: #b91c1c; border-color: #fca5a5; background: #fef2f2; }
 .todo-item__badge--color.is-green { color: #15803d; border-color: #86efac; background: #f0fdf4; }
@@ -262,6 +274,26 @@ body {
   border-radius: 10px;
   outline: none;
   cursor: pointer;
+}
+.todo-item__edit-recurrence {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+}
+.todo-item__edit-recurrence-custom {
+  width: 90px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
 }
 .todo-item.is-completed .todo-item__text { color: var(--muted); text-decoration: line-through; }
 .todo-item.is-overdue {

@@ -13,6 +13,25 @@
   const PRIORITIES = ["low", "medium", "high"];
   const PRIORITY_RANK = { low: 0, medium: 1, high: 2 };
 
+  const RECURRENCES = ["daily", "weekly", "monthly", "custom"];
+  const RECURRENCE_LABEL = {
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    custom: "Custom",
+  };
+
+  function recurrenceIntervalDays(todo) {
+    if (todo.recurrence === "daily") return 1;
+    if (todo.recurrence === "weekly") return 7;
+    if (todo.recurrence === "monthly") return 30;
+    if (todo.recurrence === "custom") {
+      const n = parseInt(todo.recurrenceInterval, 10);
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    }
+    return 0;
+  }
+
   const COLORS = [
     { value: "red", emoji: "🔴", label: "Work" },
     { value: "green", emoji: "🟢", label: "Personal" },
@@ -32,6 +51,8 @@
   const categorySelect = $("todo-category");
   const colorSelect = $("todo-color");
   const dueInput = $("todo-due");
+  const recurrenceSelect = $("todo-recurrence");
+  const recurrenceCustom = $("todo-recurrence-custom");
   const list = $("todo-list");
   const emptyState = $("empty-state");
   const itemsLeft = $("items-left");
@@ -120,6 +141,14 @@
         category: typeof t.category === "string" && t.category ? t.category : "general",
         color: typeof t.color === "string" && COLOR_MAP[t.color] ? t.color : "",
         dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
+        recurrence: RECURRENCES.includes(t.recurrence) ? t.recurrence : "",
+        recurrenceInterval: Number.isFinite(t.recurrenceInterval)
+          ? t.recurrenceInterval
+          : 1,
+        recurrenceAnchor:
+          typeof t.recurrenceAnchor === "number" && t.recurrenceAnchor
+            ? t.recurrenceAnchor
+            : null,
         favorite: !!t.favorite,
         pinned: !!t.pinned,
         createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
@@ -144,6 +173,9 @@
       category: categorySelect.value,
       color: colorSelect.value || "",
       dueDate: dueInput.value || "",
+      recurrence: recurrenceSelect.value || "",
+      recurrenceInterval: parseRecurrenceInterval(),
+      recurrenceAnchor: recurrenceSelect.value ? Date.now() : null,
       favorite: false,
       pinned: false,
       createdAt: Date.now(),
@@ -151,6 +183,12 @@
     });
     save();
     render();
+  }
+
+  function parseRecurrenceInterval() {
+    if (recurrenceSelect.value !== "custom") return 1;
+    const n = parseInt(recurrenceCustom.value, 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
   }
 
   function toggleFavorite(id) {
@@ -177,17 +215,21 @@
       todo.completed = !todo.completed;
       todo.completedAt = todo.completed ? nowTs() : null;
       save();
+      if (todo.completed) processRecurrences();
       render();
     }
   }
 
   // color is an optional label value ("" or one of COLOR_MAP keys); invalid values fall back to "".
-  function editTodo(id, text, notes, color) {
+  function editTodo(id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     todo.text = text.trim();
     if (typeof notes === "string") todo.notes = notes.trim();
     if (typeof color === "string") todo.color = COLOR_MAP[color] ? color : "";
+    if (typeof recurrence === "string") todo.recurrence = RECURRENCES.includes(recurrence) ? recurrence : "";
+    if (Number.isFinite(recurrenceInterval) && recurrenceInterval > 0) todo.recurrenceInterval = recurrenceInterval;
+    if (typeof recurrenceAnchor === "number" || recurrenceAnchor === null) todo.recurrenceAnchor = recurrenceAnchor;
     save();
     render();
   }
@@ -203,6 +245,9 @@
       favorite: !!todo.favorite,
       pinned: !!todo.pinned,
       color: todo.color || "",
+      recurrence: todo.recurrence || "",
+      recurrenceInterval: todo.recurrenceInterval || 1,
+      recurrenceAnchor: todo.recurrenceAnchor || null,
       createdAt: nowTs(),
       completedAt: null,
     };
@@ -222,6 +267,56 @@
     todos = todos.filter((t) => !t.completed);
     save();
     render();
+  }
+
+  function nextOccurrence(anchor, intervalDays) {
+    const next = new Date(anchor);
+    next.setDate(next.getDate() + intervalDays);
+    return next.getTime();
+  }
+
+  function spawnRecurrenceAt(original, anchor) {
+    const interval = recurrenceIntervalDays(original);
+    if (!interval) return;
+    const clone = {
+      id: uid(),
+      text: original.text,
+      notes: original.notes || "",
+      completed: false,
+      priority: original.priority,
+      category: original.category,
+      color: original.color || "",
+      dueDate: original.dueDate || "",
+      recurrence: original.recurrence,
+      recurrenceInterval: original.recurrenceInterval || interval,
+      recurrenceAnchor: anchor,
+      favorite: !!original.favorite,
+      pinned: !!original.pinned,
+      createdAt: Date.now(),
+      completedAt: null,
+    };
+    todos.unshift(clone);
+  }
+
+  function processRecurrences() {
+    let changed = false;
+    const now = Date.now();
+    todos.forEach((todo) => {
+      if (!todo.recurrence) return;
+      let anchor = todo.recurrenceAnchor || todo.createdAt || now;
+      const interval = recurrenceIntervalDays(todo);
+      if (!interval) return;
+      while (nextOccurrence(anchor, interval) <= now) {
+        anchor = nextOccurrence(anchor, interval);
+      }
+      if (anchor !== (todo.recurrenceAnchor || todo.createdAt || now)) {
+        todo.recurrenceAnchor = anchor;
+        spawnRecurrenceAt(todo, anchor);
+        changed = true;
+      }
+    });
+    if (changed) save();
+    return changed;
   }
 
   function isOverdue(todo) {
@@ -303,6 +398,8 @@
     editEl.querySelector(".todo-item__edit-input").value = todo.text;
     editEl.querySelector(".todo-item__edit-notes").value = todo.notes || "";
     editEl.querySelector(".todo-item__edit-color").value = todo.color || "";
+    editEl.querySelector(".todo-item__edit-recurrence").value = todo.recurrence || "";
+    editEl.querySelector(".todo-item__edit-recurrence-custom").value = todo.recurrenceInterval || 1;
     editEl.querySelector(".todo-item__edit-input").focus();
     notesEl.classList.add("is-hidden");
   }
@@ -322,7 +419,12 @@
     if (!text) return;
     const notes = item.querySelector(".todo-item__edit-notes").value;
     const color = item.querySelector(".todo-item__edit-color").value;
-    editTodo(todo.id, text, notes, color);
+    const recurrence = item.querySelector(".todo-item__edit-recurrence").value;
+    const recurrenceCustom = item.querySelector(".todo-item__edit-recurrence-custom");
+    const interval = parseInt(recurrenceCustom.value, 10);
+    const recurrenceInterval = Number.isFinite(interval) && interval > 0 ? interval : 1;
+    const recurrenceAnchor = recurrence ? (todo.recurrenceAnchor || todo.createdAt || Date.now()) : null;
+    editTodo(todo.id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor);
   }
 
   function toggleNotes(item, todo) {
@@ -382,6 +484,18 @@
         dueBadge.classList.toggle("is-overdue", isOverdue(todo));
       } else {
         dueBadge.remove();
+      }
+
+      const recurrenceBadge = item.querySelector(".todo-item__badge--recurrence");
+      if (todo.recurrence) {
+        const interval = recurrenceIntervalDays(todo);
+        const label =
+          todo.recurrence === "custom"
+            ? "Every " + interval + (interval === 1 ? " day" : " days")
+            : RECURRENCE_LABEL[todo.recurrence];
+        recurrenceBadge.textContent = "↻ " + label;
+      } else {
+        recurrenceBadge.remove();
       }
 
       const meta = item.querySelector(".todo-item__meta");
@@ -478,6 +592,9 @@
     input.value = "";
     dueInput.value = "";
     colorSelect.value = "";
+    recurrenceSelect.value = "";
+    recurrenceCustom.value = "1";
+    syncRecurrenceCustom();
     input.focus();
   });
 
@@ -503,6 +620,13 @@
     render();
   });
 
+  function syncRecurrenceCustom() {
+    const show = recurrenceSelect.value === "custom";
+    recurrenceCustom.classList.toggle("is-hidden", !show);
+  }
+  recurrenceSelect.addEventListener("change", syncRecurrenceCustom);
+  syncRecurrenceCustom();
+
   document.querySelectorAll(".filters__btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentFilter = btn.dataset.filter;
@@ -517,5 +641,6 @@
 
   initTheme();
   load();
+  processRecurrences();
   render();
 })();

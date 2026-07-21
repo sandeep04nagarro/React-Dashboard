@@ -6,6 +6,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 
 - Add, complete, and delete todos
 - Each todo has a priority (low/medium/high), category, optional colored label, and optional due date
+- Recurring tasks: recreate automatically daily, weekly, monthly, or on a custom interval (editable per task)
 - Star/favorite tasks and pin important tasks to the top
 - Assign a color label to tasks (e.g. 🔴 Work, 🟢 Personal, 🔵 Study), shown as a colored badge and editable inline
 - Search bar to filter tasks by text
