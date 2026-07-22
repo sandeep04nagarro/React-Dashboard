@@ -3,12 +3,16 @@
 
   const STORAGE_KEY = "todo-app:todos";
   const THEME_KEY = "todo-app:theme";
+  const SNOOZE_KEY = "todo-app:snoozed";
+  const FIRED_KEY = "todo-app:fired";
   let todos = [];
   let currentFilter = "all";
   let currentSearch = "";
   let priorityFilter = "all";
   let categoryFilter = "all";
   let currentSort = "created";
+  let snoozedReminders = {};
+  let firedReminders = {};
 
   const PRIORITIES = ["low", "medium", "high"];
   const PRIORITY_RANK = { low: 0, medium: 1, high: 2 };
@@ -19,6 +23,15 @@
     weekly: "Weekly",
     monthly: "Monthly",
     custom: "Custom",
+  };
+
+  const REMINDER_OFFSETS = [0, 5, 15, 60, 1440];
+  const REMINDER_LABELS = {
+    0: "At due time",
+    5: "5 min before",
+    15: "15 min before",
+    60: "1 hour before",
+    1440: "1 day before",
   };
 
   function recurrenceIntervalDays(todo) {
@@ -67,6 +80,15 @@
   const priorityFilterSelect = $("priority-filter");
   const categoryFilterSelect = $("category-filter");
   const sortSelect = $("sort-select");
+  const notifPermissionBtn = $("notification-permission");
+  const reminderCheckboxes = [
+    $("reminder-at-due"),
+    $("reminder-5min"),
+    $("reminder-15min"),
+    $("reminder-1hour"),
+    $("reminder-1day"),
+  ];
+  const reminderCustomInput = $("reminder-custom-minutes");
 
   const root = document.documentElement;
 
@@ -149,6 +171,7 @@
           typeof t.recurrenceAnchor === "number" && t.recurrenceAnchor
             ? t.recurrenceAnchor
             : null,
+        reminders: Array.isArray(t.reminders) ? t.reminders.filter((r) => typeof r === "number" && r >= 0) : [],
         favorite: !!t.favorite,
         pinned: !!t.pinned,
         manualOrder: Number.isFinite(t.manualOrder) ? t.manualOrder : null,
@@ -162,6 +185,155 @@
 
   function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  }
+
+  function loadSnoozed() {
+    try {
+      const raw = localStorage.getItem(SNOOZE_KEY);
+      snoozedReminders = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      snoozedReminders = {};
+    }
+  }
+
+  function saveSnoozed() {
+    try {
+      localStorage.setItem(SNOOZE_KEY, JSON.stringify(snoozedReminders));
+    } catch (e) {}
+  }
+
+  function loadFired() {
+    try {
+      const raw = localStorage.getItem(FIRED_KEY);
+      firedReminders = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      firedReminders = {};
+    }
+  }
+
+  function saveFired() {
+    try {
+      localStorage.setItem(FIRED_KEY, JSON.stringify(firedReminders));
+    } catch (e) {}
+  }
+
+  function snoozeKey(todoId, offsetMin) {
+    return todoId + ":" + offsetMin;
+  }
+
+  function snoozeReminder(todoId, offsetMin, snoozeMinutes) {
+    const key = snoozeKey(todoId, offsetMin);
+    snoozedReminders[key] = Date.now() + snoozeMinutes * 60000;
+    saveSnoozed();
+  }
+
+  function clearFiredForTodo(todoId) {
+    Object.keys(firedReminders).forEach((k) => {
+      if (k.startsWith(todoId + ":")) delete firedReminders[k];
+    });
+    saveFired();
+  }
+
+  function isSnoozed(key) {
+    return snoozedReminders[key] && snoozedReminders[key] > Date.now();
+  }
+
+  function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+      alert("Your browser does not support notifications.");
+      return;
+    }
+    Notification.requestPermission().then((permission) => {
+      updatePermissionUI(permission);
+    });
+  }
+
+  function updatePermissionUI(permission) {
+    if (!notifPermissionBtn) return;
+    if (!("Notification" in window)) {
+      notifPermissionBtn.classList.add("is-hidden");
+      return;
+    }
+    if (permission === "granted") {
+      notifPermissionBtn.classList.add("is-granted");
+      notifPermissionBtn.querySelector(".notification-btn__label").textContent = "Notifications Enabled";
+    } else if (permission === "denied") {
+      notifPermissionBtn.classList.add("is-denied");
+      notifPermissionBtn.querySelector(".notification-btn__label").textContent = "Notifications Blocked";
+    } else {
+      notifPermissionBtn.classList.remove("is-granted", "is-denied");
+      notifPermissionBtn.querySelector(".notification-btn__label").textContent = "Enable Notifications";
+    }
+  }
+
+  function sendNotification(todo, offsetMin) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    let dueTimeStr = "";
+    if (todo.dueDate) {
+      const dueDate = new Date(todo.dueDate + "T00:00:00");
+      dueTimeStr = dueDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    const offsetLabel = REMINDER_LABELS[offsetMin] || "in " + offsetMin + " min";
+    const title = "🔔 " + todo.text;
+    const body = offsetMin === 0
+      ? "This task is now due" + (dueTimeStr ? " (" + dueTimeStr + ")" : "")
+      : "Due " + offsetLabel + (dueTimeStr ? " (" + dueTimeStr + ")" : "");
+
+    const notif = new Notification(title, {
+      body: body,
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>",
+      tag: "todo-" + todo.id + "-" + offsetMin,
+      renotify: true,
+    });
+
+    notif.onclick = () => {
+      window.focus();
+      notif.close();
+    };
+
+    setTimeout(() => notif.close(), 15000);
+  }
+
+  function checkReminders() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const now = Date.now();
+    todos.forEach((todo) => {
+      if (todo.completed || !todo.dueDate || !todo.reminders || !todo.reminders.length) return;
+
+      const dueTs = new Date(todo.dueDate + "T23:59:59").getTime();
+
+      todo.reminders.forEach((offsetMin) => {
+        const key = snoozeKey(todo.id, offsetMin);
+        const fireAt = dueTs - offsetMin * 60000;
+
+        if (now >= fireAt && !firedReminders[key] && !isSnoozed(key)) {
+          firedReminders[key] = now;
+          saveFired();
+          sendNotification(todo, offsetMin);
+        }
+      });
+    });
+  }
+
+  function collectReminders() {
+    const reminders = [];
+    reminderCheckboxes.forEach((cb) => {
+      if (cb.checked) reminders.push(parseInt(cb.value, 10));
+    });
+    const customMin = parseInt(reminderCustomInput.value, 10);
+    if (reminderCustomInput.value.trim() && Number.isFinite(customMin) && customMin > 0) {
+      reminders.push(customMin);
+    }
+    return reminders.sort((a, b) => a - b);
+  }
+
+  function resetReminderForm() {
+    reminderCheckboxes.forEach((cb) => { cb.checked = false; });
+    if (reminderCheckboxes[2]) reminderCheckboxes[2].checked = true;
+    reminderCustomInput.value = "";
   }
 
   function addTodo(text) {
@@ -178,6 +350,7 @@
       recurrence: recurrenceSelect.value || "",
       recurrenceInterval: parseRecurrenceInterval(),
       recurrenceAnchor: recurrenceSelect.value ? Date.now() : null,
+      reminders: collectReminders(),
       favorite: false,
       pinned: false,
       manualOrder: maxOrder + 1,
@@ -224,7 +397,7 @@
   }
 
   // color is an optional label value ("" or one of COLOR_MAP keys); invalid values fall back to "".
-  function editTodo(id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor) {
+  function editTodo(id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     todo.text = text.trim();
@@ -233,6 +406,7 @@
     if (typeof recurrence === "string") todo.recurrence = RECURRENCES.includes(recurrence) ? recurrence : "";
     if (Number.isFinite(recurrenceInterval) && recurrenceInterval > 0) todo.recurrenceInterval = recurrenceInterval;
     if (typeof recurrenceAnchor === "number" || recurrenceAnchor === null) todo.recurrenceAnchor = recurrenceAnchor;
+    if (Array.isArray(reminders)) todo.reminders = reminders;
     save();
     render();
   }
@@ -252,6 +426,7 @@
       recurrence: todo.recurrence || "",
       recurrenceInterval: todo.recurrenceInterval || 1,
       recurrenceAnchor: todo.recurrenceAnchor || null,
+      reminders: Array.isArray(todo.reminders) ? todo.reminders.slice() : [],
       manualOrder: maxOrder + 1,
       createdAt: nowTs(),
       completedAt: null,
@@ -296,6 +471,7 @@
       recurrence: original.recurrence,
       recurrenceInterval: original.recurrenceInterval || interval,
       recurrenceAnchor: anchor,
+      reminders: Array.isArray(original.reminders) ? original.reminders.slice() : [],
       favorite: !!original.favorite,
       pinned: !!original.pinned,
       manualOrder: maxOrder + 1,
@@ -419,6 +595,15 @@
     editEl.querySelector(".todo-item__edit-color").value = todo.color || "";
     editEl.querySelector(".todo-item__edit-recurrence").value = todo.recurrence || "";
     editEl.querySelector(".todo-item__edit-recurrence-custom").value = todo.recurrenceInterval || 1;
+    const reminders = todo.reminders || [];
+    editEl.querySelectorAll(".todo-item__edit-reminder").forEach((cb) => {
+      cb.checked = reminders.includes(parseInt(cb.value, 10));
+    });
+    const customEl = editEl.querySelector(".todo-item__edit-reminder-custom");
+    if (customEl) {
+      const customReminder = reminders.find((r) => !REMINDER_OFFSETS.includes(r));
+      customEl.value = customReminder || "";
+    }
     editEl.querySelector(".todo-item__edit-input").focus();
     notesEl.classList.add("is-hidden");
   }
@@ -433,6 +618,21 @@
     }
   }
 
+  function collectEditReminders(item) {
+    const reminders = [];
+    item.querySelectorAll(".todo-item__edit-reminder").forEach((cb) => {
+      if (cb.checked) reminders.push(parseInt(cb.value, 10));
+    });
+    const customEl = item.querySelector(".todo-item__edit-reminder-custom");
+    if (customEl) {
+      const customMin = parseInt(customEl.value, 10);
+      if (customEl.value.trim() && Number.isFinite(customMin) && customMin > 0) {
+        reminders.push(customMin);
+      }
+    }
+    return reminders.sort((a, b) => a - b);
+  }
+
   function saveEdit(item, todo) {
     const text = item.querySelector(".todo-item__edit-input").value.trim();
     if (!text) return;
@@ -443,7 +643,8 @@
     const interval = parseInt(recurrenceCustom.value, 10);
     const recurrenceInterval = Number.isFinite(interval) && interval > 0 ? interval : 1;
     const recurrenceAnchor = recurrence ? (todo.recurrenceAnchor || todo.createdAt || Date.now()) : null;
-    editTodo(todo.id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor);
+    const reminders = collectEditReminders(item);
+    editTodo(todo.id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders);
   }
 
   function toggleNotes(item, todo) {
@@ -515,6 +716,15 @@
         recurrenceBadge.textContent = "↻ " + label;
       } else {
         recurrenceBadge.remove();
+      }
+
+      const reminderBadge = item.querySelector(".todo-item__badge--reminder");
+      if (todo.reminders && todo.reminders.length && todo.dueDate) {
+        const hasSnoozed = todo.reminders.some((r) => isSnoozed(snoozeKey(todo.id, r)));
+        reminderBadge.textContent = hasSnoozed ? "🔕 Reminder snoozed" : "🔔 " + todo.reminders.length + " reminder" + (todo.reminders.length === 1 ? "" : "s");
+        reminderBadge.classList.toggle("is-snoozed", hasSnoozed);
+      } else {
+        reminderBadge.remove();
       }
 
       const meta = item.querySelector(".todo-item__meta");
@@ -676,6 +886,7 @@
     recurrenceSelect.value = "";
     recurrenceCustom.value = "1";
     syncRecurrenceCustom();
+    resetReminderForm();
     input.focus();
   });
 
@@ -708,6 +919,65 @@
   recurrenceSelect.addEventListener("change", syncRecurrenceCustom);
   syncRecurrenceCustom();
 
+  notifPermissionBtn.addEventListener("click", requestNotificationPermission);
+
+  let snoozeOpenId = null;
+  document.addEventListener("click", (e) => {
+    const wrap = e.target.closest(".todo-item__snooze-wrap");
+    if (!wrap && snoozeOpenId) {
+      document.querySelectorAll(".todo-item__snooze-dropdown").forEach((d) => d.classList.add("is-hidden"));
+      snoozeOpenId = null;
+    }
+  });
+
+  function handleSnooze(todoId, offsetMin, snoozeMinutes) {
+    snoozeReminder(todoId, offsetMin, snoozeMinutes);
+    const snoozedUntil = Date.now() + snoozeMinutes * 60000;
+    const untilStr = new Date(snoozedUntil).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("🔕 Reminder Snoozed", {
+        body: "Reminder snoozed until " + untilStr,
+        tag: "snooze-" + todoId + "-" + offsetMin,
+      });
+    }
+    render();
+  }
+
+  list.addEventListener("click", (e) => {
+    const snoozeBtn = e.target.closest(".todo-item__snooze");
+    if (snoozeBtn) {
+      e.stopPropagation();
+      const item = snoozeBtn.closest(".todo-item");
+      if (!item) return;
+      const todoId = item.dataset.id;
+      const dropdown = item.querySelector(".todo-item__snooze-dropdown");
+      const isVisible = !dropdown.classList.contains("is-hidden");
+      document.querySelectorAll(".todo-item__snooze-dropdown").forEach((d) => d.classList.add("is-hidden"));
+      if (!isVisible) {
+        dropdown.classList.remove("is-hidden");
+        snoozeOpenId = todoId;
+      } else {
+        snoozeOpenId = null;
+      }
+      return;
+    }
+
+    const snoozeOption = e.target.closest(".todo-item__snooze-option");
+    if (snoozeOption) {
+      e.stopPropagation();
+      const item = snoozeOption.closest(".todo-item");
+      if (!item) return;
+      const todoId = item.dataset.id;
+      const todo = todos.find((t) => t.id === todoId);
+      const snoozeMin = parseInt(snoozeOption.dataset.snooze, 10);
+      if (!todo || !snoozeMin) return;
+      todo.reminders.forEach((r) => handleSnooze(todoId, r, snoozeMin));
+      document.querySelectorAll(".todo-item__snooze-dropdown").forEach((d) => d.classList.add("is-hidden"));
+      snoozeOpenId = null;
+      return;
+    }
+  });
+
   document.querySelectorAll(".filters__btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentFilter = btn.dataset.filter;
@@ -722,6 +992,13 @@
 
   initTheme();
   load();
+  loadSnoozed();
+  loadFired();
   processRecurrences();
   render();
+  if ("Notification" in window) {
+    updatePermissionUI(Notification.permission);
+  }
+  checkReminders();
+  setInterval(checkReminders, 30000);
 })();
