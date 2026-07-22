@@ -233,6 +233,26 @@
 
         <p class="todo-item__notes"></p>
 
+        <div class="todo-item__dependencies is-hidden"></div>
+
+        <div class="todo-item__subtasks is-hidden" data-expanded="false">
+          <div class="subtask-progress" role="progressbar" aria-label="Subtask progress">
+            <span class="subtask-progress__text">0/0 subtasks completed</span>
+            <div class="subtask-progress__track">
+              <div class="subtask-progress__fill"></div>
+            </div>
+          </div>
+          <ul class="todo-item__subtask-list"></ul>
+          <form class="todo-item__subtask-add" autocomplete="off">
+            <input type="text" class="todo-item__subtask-input" placeholder="Add a subtask..." aria-label="New subtask" />
+            <button type="submit" class="todo-item__subtask-add-btn" title="Add subtask">+</button>
+          </form>
+        </div>
+
+        <button type="button" class="todo-item__subtask-toggle" title="Show/hide subtasks">
+          <span class="subtask-toggle__icon">▸</span> <span class="subtask-toggle__label">Subtasks</span>
+        </button>
+
         <div class="todo-item__edit" role="group" aria-label="Edit todo">
           <input type="text" class="todo-item__edit-input" aria-label="Todo text" />
           <textarea class="todo-item__edit-notes" rows="2" placeholder="Notes / description"></textarea>
@@ -265,6 +285,11 @@
               </label>
             </div>
           </div>
+          <label class="todo-item__edit-dep-label">
+            <span class="toolbar__label">Dependencies</span>
+            <select class="todo-item__edit-depends" multiple aria-label="Task dependencies">
+            </select>
+          </label>
           <div class="todo-item__edit-actions">
             <button class="todo-item__save" type="button">Save</button>
             <button class="todo-item__cancel" type="button">Cancel</button>
