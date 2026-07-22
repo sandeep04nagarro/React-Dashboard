@@ -34,6 +34,7 @@ Open `dashboard.html` to view analytics about your task completion habits:
 - **Stats**: Tasks completed today, this week, completion rate, average completion time, current streak, and longest streak
 - **Charts**: Tasks completed per day (last 30 days), completion by category, completion by priority, most productive weekday, and overdue trend
 - **Monthly Heatmap**: GitHub-style calendar heatmap showing daily task completions with month navigation
+- **Smart Reminders & Browser Notifications**: set reminder offsets per task (at due time, 5 min, 15 min, 1 hr, 1 day, or custom minutes) and receive browser notifications before tasks are due. Snooze reminders directly from the task UI (10 min, 30 min, 1 hr, 1 day options).
 
 ## Usage
 
