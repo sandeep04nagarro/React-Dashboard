@@ -11,7 +11,8 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Assign a color label to tasks (e.g. 🔴 Work, 🟢 Personal, 🔵 Study), shown as a colored badge and editable inline
 - Search bar to filter tasks by text
 - Filter tasks by priority and category, or by favorites / pinned
-- Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z; pinned always float first)
+- Sort tasks (newest/oldest, priority high-low/low-high, due date soonest, A-Z, manual drag-to-reorder; pinned always float first)
+- Manual drag-and-drop reordering: select "Manual (drag to reorder)" from the sort dropdown and use the grip handle to reorder tasks
 - Edit existing todos (text + notes) inline, with Enter to save / Esc to cancel
 - Duplicate a todo to create a fresh copy (carries favorite/pinned state)
 - Notes / description field per task

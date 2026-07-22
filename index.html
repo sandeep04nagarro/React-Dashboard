@@ -125,6 +125,7 @@
               <option value="priority-asc">Priority (low-high)</option>
               <option value="due">Due date (soonest)</option>
               <option value="alpha">A-Z</option>
+              <option value="manual">Manual (drag to reorder)</option>
             </select>
           </label>
         </div>
@@ -168,6 +169,7 @@
     <template id="todo-item-template">
       <li class="todo-item">
         <div class="todo-item__main">
+          <span class="todo-item__drag-handle" draggable="true" aria-label="Drag to reorder" title="Drag to reorder">⠿</span>
           <label class="todo-item__label">
             <input type="checkbox" class="todo-item__checkbox" />
             <span class="todo-item__text"></span>

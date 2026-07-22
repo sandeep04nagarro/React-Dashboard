@@ -151,6 +151,7 @@
             : null,
         favorite: !!t.favorite,
         pinned: !!t.pinned,
+        manualOrder: Number.isFinite(t.manualOrder) ? t.manualOrder : null,
         createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
         completedAt: t.completed ? t.completedAt || null : null,
       }));
@@ -164,6 +165,7 @@
   }
 
   function addTodo(text) {
+    const maxOrder = todos.reduce((max, t) => Math.max(max, t.manualOrder || 0), 0);
     todos.unshift({
       id: uid(),
       text,
@@ -178,6 +180,7 @@
       recurrenceAnchor: recurrenceSelect.value ? Date.now() : null,
       favorite: false,
       pinned: false,
+      manualOrder: maxOrder + 1,
       createdAt: Date.now(),
       completedAt: null
     });
@@ -237,6 +240,7 @@
   function duplicateTodo(id) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
+    const maxOrder = todos.reduce((max, t) => Math.max(max, t.manualOrder || 0), 0);
     const copy = {
       id: uid(),
       text: todo.text,
@@ -248,6 +252,7 @@
       recurrence: todo.recurrence || "",
       recurrenceInterval: todo.recurrenceInterval || 1,
       recurrenceAnchor: todo.recurrenceAnchor || null,
+      manualOrder: maxOrder + 1,
       createdAt: nowTs(),
       completedAt: null,
     };
@@ -278,6 +283,7 @@
   function spawnRecurrenceAt(original, anchor) {
     const interval = recurrenceIntervalDays(original);
     if (!interval) return;
+    const maxOrder = todos.reduce((max, t) => Math.max(max, t.manualOrder || 0), 0);
     const clone = {
       id: uid(),
       text: original.text,
@@ -292,6 +298,7 @@
       recurrenceAnchor: anchor,
       favorite: !!original.favorite,
       pinned: !!original.pinned,
+      manualOrder: maxOrder + 1,
       createdAt: Date.now(),
       completedAt: null,
     };
@@ -324,6 +331,13 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return new Date(todo.dueDate + "T00:00:00") < today;
+  }
+
+  function normalizeManualOrder() {
+    const ordered = todos.slice().sort((a, b) => (a.manualOrder || 0) - (b.manualOrder || 0));
+    ordered.forEach((t, i) => {
+      t.manualOrder = i;
+    });
   }
 
   function filtered() {
@@ -370,9 +384,14 @@
       case "alpha":
         result.sort((a, b) => a.text.localeCompare(b.text));
         break;
+      case "manual":
+        result.sort((a, b) => (a.manualOrder || 0) - (b.manualOrder || 0));
+        break;
     }
 
-    result.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    if (currentSort !== "manual") {
+      result.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    }
 
     return result;
   }
@@ -550,6 +569,68 @@
             cancelEdit(item);
           }
         });
+
+      const dragHandle = item.querySelector(".todo-item__drag-handle");
+      if (currentSort === "manual") {
+        dragHandle.addEventListener("dragstart", (e) => {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", todo.id);
+          item.classList.add("dragging");
+          setTimeout(() => item.classList.add("dragging"), 0);
+        });
+        dragHandle.addEventListener("dragend", () => {
+          item.classList.remove("dragging");
+          document.querySelectorAll(".todo-item.drag-above, .todo-item.drag-below").forEach((el) => {
+            el.classList.remove("drag-above", "drag-below");
+          });
+          list.classList.remove("drag-over");
+        });
+        item.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          document.querySelectorAll(".todo-item.drag-above, .todo-item.drag-below").forEach((el) => {
+            if (el !== item) el.classList.remove("drag-above", "drag-below");
+          });
+          if (e.clientY < midY) {
+            item.classList.add("drag-above");
+            item.classList.remove("drag-below");
+          } else {
+            item.classList.add("drag-below");
+            item.classList.remove("drag-above");
+          }
+        });
+        item.addEventListener("dragleave", () => {
+          item.classList.remove("drag-above", "drag-below");
+        });
+        item.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const draggedId = e.dataTransfer.getData("text/plain");
+          if (!draggedId || draggedId === todo.id) return;
+          const draggedTodo = todos.find((t) => t.id === draggedId);
+          const targetTodo = todos.find((t) => t.id === todo.id);
+          if (!draggedTodo || !targetTodo) return;
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          const insertBefore = e.clientY < midY;
+          const targetOrder = targetTodo.manualOrder || 0;
+          const draggedOrder = draggedTodo.manualOrder || 0;
+          if (insertBefore) {
+            draggedTodo.manualOrder = targetOrder - 0.5;
+          } else {
+            draggedTodo.manualOrder = targetOrder + 0.5;
+          }
+          normalizeManualOrder();
+          save();
+          render();
+        });
+        list.classList.add("drag-over");
+      } else {
+        dragHandle.setAttribute("draggable", "false");
+        dragHandle.style.cursor = "default";
+        dragHandle.style.opacity = "0.3";
+      }
 
       list.appendChild(item);
     });
