@@ -196,6 +196,41 @@ body {
 }
 
 .todo-list { list-style: none; margin: 0; padding: 0; }
+.todo-list.drag-over .todo-item {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.todo-item.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+.todo-item.drag-above {
+  border-top: 2px solid var(--primary);
+  margin-top: -1px;
+}
+.todo-item.drag-below {
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: -1px;
+}
+.todo-item__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--muted);
+  cursor: grab;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  user-select: none;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.todo-item__drag-handle:hover {
+  color: var(--text);
+  background: rgba(107, 114, 128, 0.12);
+}
+.todo-item__drag-handle:active {
+  cursor: grabbing;
+}
 .todo-item {
   display: flex;
   flex-direction: column;
