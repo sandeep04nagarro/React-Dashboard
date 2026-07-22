@@ -28,6 +28,10 @@
             <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
             <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
           </button>
+          <button id="notification-permission" class="notification-btn" type="button" aria-label="Enable browser notifications">
+            <span class="notification-btn__icon" aria-hidden="true">🔔</span>
+            <span class="notification-btn__label">Enable Notifications</span>
+          </button>
         </div>
         <p class="app__subtitle">Built with vanilla HTML, CSS & JS</p>
       </header>
@@ -82,6 +86,21 @@
           value="1"
           aria-label="Custom recurrence interval in days"
         />
+        <div class="todo-form__reminders">
+          <label class="toolbar__field">
+            <span class="toolbar__label">Reminders</span>
+          </label>
+          <div class="reminder-checkboxes">
+            <label class="reminder-checkbox"><input type="checkbox" id="reminder-at-due" value="0" /> At due time</label>
+            <label class="reminder-checkbox"><input type="checkbox" id="reminder-5min" value="5" /> 5 min before</label>
+            <label class="reminder-checkbox"><input type="checkbox" id="reminder-15min" value="15" checked /> 15 min before</label>
+            <label class="reminder-checkbox"><input type="checkbox" id="reminder-1hour" value="60" /> 1 hour before</label>
+            <label class="reminder-checkbox"><input type="checkbox" id="reminder-1day" value="1440" /> 1 day before</label>
+            <label class="reminder-checkbox">
+              Custom: <input type="number" id="reminder-custom-minutes" class="todo-form__reminder-custom" min="1" value="" placeholder="min" aria-label="Custom reminder minutes" /> min
+            </label>
+          </div>
+        </div>
         <button class="todo-form__add" type="submit">Add</button>
       </form>
 
@@ -179,6 +198,7 @@
               <span class="todo-item__badge todo-item__badge--category"></span>
               <span class="todo-item__badge todo-item__badge--due"></span>
               <span class="todo-item__badge todo-item__badge--recurrence"></span>
+              <span class="todo-item__badge todo-item__badge--reminder"></span>
             </span>
           </label>
           <div class="todo-item__actions">
@@ -187,6 +207,15 @@
             <button class="todo-item__icon-btn todo-item__edit-btn" type="button" aria-label="Edit todo" title="Edit">&#9998;</button>
             <button class="todo-item__icon-btn todo-item__notes-toggle" type="button" aria-label="Toggle notes" title="Notes">&#9776;</button>
             <button class="todo-item__icon-btn todo-item__duplicate" type="button" aria-label="Duplicate todo" title="Duplicate">&#10697;</button>
+            <div class="todo-item__snooze-wrap">
+              <button class="todo-item__icon-btn todo-item__snooze" type="button" aria-label="Snooze reminders" title="Snooze">&#9201;</button>
+              <div class="todo-item__snooze-dropdown is-hidden">
+                <button type="button" class="todo-item__snooze-option" data-snooze="10">Snooze 10 min</button>
+                <button type="button" class="todo-item__snooze-option" data-snooze="30">Snooze 30 min</button>
+                <button type="button" class="todo-item__snooze-option" data-snooze="60">Snooze 1 hour</button>
+                <button type="button" class="todo-item__snooze-option" data-snooze="1440">Snooze 1 day</button>
+              </div>
+            </div>
             <button class="todo-item__icon-btn todo-item__delete" type="button" aria-label="Delete todo" title="Delete">&times;</button>
           </div>
         </div>
@@ -217,6 +246,19 @@
             <option value="custom">Custom…</option>
           </select>
           <input type="number" class="todo-item__edit-recurrence-custom" min="1" value="1" aria-label="Custom recurrence interval in days" />
+          <div class="todo-item__edit-reminders">
+            <span class="toolbar__label">Reminders</span>
+            <div class="reminder-checkboxes">
+              <label class="reminder-checkbox"><input type="checkbox" class="todo-item__edit-reminder" value="0" /> At due time</label>
+              <label class="reminder-checkbox"><input type="checkbox" class="todo-item__edit-reminder" value="5" /> 5 min before</label>
+              <label class="reminder-checkbox"><input type="checkbox" class="todo-item__edit-reminder" value="15" /> 15 min before</label>
+              <label class="reminder-checkbox"><input type="checkbox" class="todo-item__edit-reminder" value="60" /> 1 hour before</label>
+              <label class="reminder-checkbox"><input type="checkbox" class="todo-item__edit-reminder" value="1440" /> 1 day before</label>
+              <label class="reminder-checkbox">
+                Custom: <input type="number" class="todo-item__edit-reminder-custom" min="1" value="" placeholder="min" aria-label="Custom reminder minutes" /> min
+              </label>
+            </div>
+          </div>
           <div class="todo-item__edit-actions">
             <button class="todo-item__save" type="button">Save</button>
             <button class="todo-item__cancel" type="button">Cancel</button>

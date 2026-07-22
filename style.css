@@ -485,3 +485,122 @@ body {
   .app { padding: 1.25rem; border-radius: 12px; }
   body { padding: 1rem; align-items: stretch; }
 }
+
+.notification-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.notification-btn:hover { border-color: var(--primary); }
+.notification-btn.is-granted {
+  color: var(--success);
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+}
+.notification-btn.is-denied {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
+  cursor: default;
+}
+.notification-btn__icon { font-size: 0.9rem; line-height: 1; }
+
+.todo-form__reminders {
+  flex: 1 1 100%;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--border);
+}
+.reminder-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.85rem;
+  margin-top: 0.3rem;
+}
+.reminder-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.reminder-checkbox input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+.todo-form__reminder-custom {
+  width: 60px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card);
+  color: var(--text);
+}
+
+.todo-item__badge--reminder {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.todo-item__badge--reminder.is-snoozed {
+  color: var(--muted);
+  border-color: var(--border);
+  font-style: italic;
+}
+
+.todo-item__edit-reminders {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+.todo-item__edit-reminder-custom {
+  width: 60px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card);
+  color: var(--text);
+}
+
+.todo-item__snooze-wrap { position: relative; display: inline-flex; }
+.todo-item__snooze-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  min-width: 140px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 0.3rem 0;
+}
+.todo-item__snooze-option {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.todo-item__snooze-option:hover {
+  background: var(--toggle-bg);
+}
+[data-theme="dark"] .todo-item__snooze-dropdown {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}

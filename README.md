@@ -25,6 +25,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Dark / light mode toggle (remembers your choice and respects system preference)
 - Persists to localStorage (survives page refresh)
 - Responsive layout for desktop and mobile
+- **Smart Reminders & Browser Notifications**: set reminder offsets per task (at due time, 5 min, 15 min, 1 hr, 1 day, or custom minutes) and receive browser notifications before tasks are due. Snooze reminders directly from the task UI (10 min, 30 min, 1 hr, 1 day options).
 
 ## Usage
 
