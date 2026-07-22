@@ -25,6 +25,15 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Dark / light mode toggle (remembers your choice and respects system preference)
 - Persists to localStorage (survives page refresh)
 - Responsive layout for desktop and mobile
+- **Productivity Analytics Dashboard** with stats, charts, and a monthly heatmap
+
+## Productivity Dashboard
+
+Open `dashboard.html` to view analytics about your task completion habits:
+
+- **Stats**: Tasks completed today, this week, completion rate, average completion time, current streak, and longest streak
+- **Charts**: Tasks completed per day (last 30 days), completion by category, completion by priority, most productive weekday, and overdue trend
+- **Monthly Heatmap**: GitHub-style calendar heatmap showing daily task completions with month navigation
 
 ## Usage
 
@@ -32,6 +41,9 @@ Open index.html directly in any modern browser. That is it.
 
 ## File Structure
 
-index.html   # Markup and template for todo items
-style.css    # Styling and responsive layout
-script.js    # Todo logic, filtering, and localStorage persistence
+index.html       # Markup and template for todo items
+dashboard.html   # Productivity analytics dashboard
+style.css        # Todo app styling and responsive layout
+dashboard.css    # Dashboard styling
+script.js        # Todo logic, filtering, and localStorage persistence
+dashboard.js     # Analytics computation and chart rendering
