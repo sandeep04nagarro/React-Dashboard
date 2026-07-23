@@ -132,6 +132,12 @@
   const uid = () =>
     Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
   function formatTs(ts) {
     if (!ts) return "";
     try {
@@ -177,6 +183,16 @@
         manualOrder: Number.isFinite(t.manualOrder) ? t.manualOrder : null,
         createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
         completedAt: t.completed ? t.completedAt || null : null,
+        subtasks: Array.isArray(t.subtasks)
+          ? t.subtasks.filter((s) => s && typeof s.id === "string" && typeof s.text === "string").map((s) => ({
+              id: s.id,
+              text: s.text,
+              completed: !!s.completed,
+            }))
+          : [],
+        dependsOn: Array.isArray(t.dependsOn)
+          ? t.dependsOn.filter((d) => typeof d === "string")
+          : [],
       }));
     } catch (e) {
       todos = [];
@@ -355,7 +371,9 @@
       pinned: false,
       manualOrder: maxOrder + 1,
       createdAt: Date.now(),
-      completedAt: null
+      completedAt: null,
+      subtasks: [],
+      dependsOn: [],
     });
     save();
     render();
@@ -387,17 +405,23 @@
 
   function toggleTodo(id) {
     const todo = todos.find((t) => t.id === id);
-    if (todo) {
-      todo.completed = !todo.completed;
-      todo.completedAt = todo.completed ? nowTs() : null;
-      save();
-      if (todo.completed) processRecurrences();
-      render();
+    if (!todo) return;
+    if (!todo.completed && !canCompleteTodo(todo)) {
+      const unmet = getUnmetDependencies(todo);
+      const names = unmet.map((d) => d.text).join(", ");
+      alert("Cannot complete: blocked by " + names);
+      return;
     }
+    todo.completed = !todo.completed;
+    todo.completedAt = todo.completed ? nowTs() : null;
+    if (todo.completed) clearFiredForTodo(todo.id);
+    save();
+    if (todo.completed) processRecurrences();
+    render();
   }
 
   // color is an optional label value ("" or one of COLOR_MAP keys); invalid values fall back to "".
-  function editTodo(id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders) {
+  function editTodo(id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders, dependsOn) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     todo.text = text.trim();
@@ -407,6 +431,7 @@
     if (Number.isFinite(recurrenceInterval) && recurrenceInterval > 0) todo.recurrenceInterval = recurrenceInterval;
     if (typeof recurrenceAnchor === "number" || recurrenceAnchor === null) todo.recurrenceAnchor = recurrenceAnchor;
     if (Array.isArray(reminders)) todo.reminders = reminders;
+    if (Array.isArray(dependsOn)) todo.dependsOn = dependsOn;
     save();
     render();
   }
@@ -430,6 +455,8 @@
       manualOrder: maxOrder + 1,
       createdAt: nowTs(),
       completedAt: null,
+      subtasks: [],
+      dependsOn: [],
     };
     const idx = todos.findIndex((t) => t.id === id);
     todos.splice(idx, 0, copy);
@@ -439,6 +466,11 @@
 
   function deleteTodo(id) {
     todos = todos.filter((t) => t.id !== id);
+    todos.forEach((t) => {
+      if (t.dependsOn) {
+        t.dependsOn = t.dependsOn.filter((d) => d !== id);
+      }
+    });
     save();
     render();
   }
@@ -477,6 +509,8 @@
       manualOrder: maxOrder + 1,
       createdAt: Date.now(),
       completedAt: null,
+      subtasks: [],
+      dependsOn: [],
     };
     todos.unshift(clone);
   }
@@ -604,6 +638,18 @@
       const customReminder = reminders.find((r) => !REMINDER_OFFSETS.includes(r));
       customEl.value = customReminder || "";
     }
+
+    const depSelect = editEl.querySelector(".todo-item__edit-depends");
+    depSelect.innerHTML = '<option value="">No dependencies</option>';
+    todos.forEach((t) => {
+      if (t.id === todo.id) return;
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.text;
+      if (todo.dependsOn && todo.dependsOn.includes(t.id)) opt.selected = true;
+      depSelect.appendChild(opt);
+    });
+
     editEl.querySelector(".todo-item__edit-input").focus();
     notesEl.classList.add("is-hidden");
   }
@@ -644,13 +690,88 @@
     const recurrenceInterval = Number.isFinite(interval) && interval > 0 ? interval : 1;
     const recurrenceAnchor = recurrence ? (todo.recurrenceAnchor || todo.createdAt || Date.now()) : null;
     const reminders = collectEditReminders(item);
-    editTodo(todo.id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders);
+    const depSelect = item.querySelector(".todo-item__edit-depends");
+    const dependsOn = depSelect
+      ? Array.from(depSelect.selectedOptions).map((o) => o.value).filter(Boolean)
+      : [];
+    editTodo(todo.id, text, notes, color, recurrence, recurrenceInterval, recurrenceAnchor, reminders, dependsOn);
   }
 
   function toggleNotes(item, todo) {
     item
       .querySelector(".todo-item__notes")
       .classList.toggle("is-hidden");
+  }
+
+  function isDependencyMet(todoId, excludeId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo || !todo.dependsOn || !todo.dependsOn.length) return true;
+    return todo.dependsOn.every((depId) => {
+      if (depId === excludeId) return true;
+      const dep = todos.find((t) => t.id === depId);
+      return dep && dep.completed;
+    });
+  }
+
+  function getUnmetDependencies(todo) {
+    if (!todo.dependsOn || !todo.dependsOn.length) return [];
+    return todo.dependsOn
+      .map((depId) => todos.find((t) => t.id === depId))
+      .filter((dep) => dep && !dep.completed);
+  }
+
+  function addSubtask(todoId, text) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo) return;
+    todo.subtasks.push({ id: uid(), text: text.trim(), completed: false });
+    save();
+    render();
+  }
+
+  function toggleSubtask(todoId, subtaskId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo) return;
+    const st = todo.subtasks.find((s) => s.id === subtaskId);
+    if (!st) return;
+    st.completed = !st.completed;
+    if (todo.subtasks.length > 0 && todo.subtasks.every((s) => s.completed)) {
+      todo.completed = true;
+      todo.completedAt = nowTs();
+      clearFiredForTodo(todo.id);
+      processRecurrences();
+    } else if (todo.completed && !todo.subtasks.every((s) => s.completed)) {
+      todo.completed = false;
+      todo.completedAt = null;
+    }
+    save();
+    render();
+  }
+
+  function deleteSubtask(todoId, subtaskId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo) return;
+    todo.subtasks = todo.subtasks.filter((s) => s.id !== subtaskId);
+    if (todo.subtasks.length === 0) {
+      // subtasks cleared, keep parent as-is
+    } else if (todo.subtasks.every((s) => s.completed)) {
+      todo.completed = true;
+      todo.completedAt = nowTs();
+      clearFiredForTodo(todo.id);
+      processRecurrences();
+    }
+    save();
+    render();
+  }
+
+  function getSubtaskProgress(todo) {
+    if (!todo.subtasks || todo.subtasks.length === 0) return null;
+    const total = todo.subtasks.length;
+    const done = todo.subtasks.filter((s) => s.completed).length;
+    return { done, total, percent: Math.round((done / total) * 100) };
+  }
+
+  function canCompleteTodo(todo) {
+    return isDependencyMet(todo.id);
   }
 
   function render() {
@@ -742,6 +863,86 @@
       const notesEl = item.querySelector(".todo-item__notes");
       notesEl.textContent = todo.notes || "";
       if (!todo.notes) notesEl.classList.add("is-hidden");
+
+      const subtaskContainer = item.querySelector(".todo-item__subtasks");
+      const subtaskList = item.querySelector(".todo-item__subtask-list");
+      const subtaskProgress = item.querySelector(".subtask-progress");
+      const subtaskAddForm = item.querySelector(".todo-item__subtask-add");
+      const subtaskInput = item.querySelector(".todo-item__subtask-input");
+      const subtaskToggleBtn = item.querySelector(".todo-item__subtask-toggle");
+
+      const hasSubtasks = todo.subtasks && todo.subtasks.length > 0;
+      const isExpanded = subtaskContainer.dataset.expanded === "true";
+
+      if (hasSubtasks) {
+        const progress = getSubtaskProgress(todo);
+        subtaskToggleBtn.querySelector(".subtask-toggle__label").textContent =
+          "Subtasks (" + progress.done + "/" + progress.total + ")";
+      } else {
+        subtaskToggleBtn.querySelector(".subtask-toggle__label").textContent = "Subtasks";
+      }
+
+      if (hasSubtasks || isExpanded) {
+        subtaskList.innerHTML = "";
+        const progress = getSubtaskProgress(todo);
+        if (progress) {
+          subtaskProgress.classList.remove("is-hidden");
+          subtaskProgress.querySelector(".subtask-progress__text").textContent =
+            progress.done + "/" + progress.total + " subtasks completed";
+          subtaskProgress.querySelector(".subtask-progress__fill").style.width = progress.percent + "%";
+        } else {
+          subtaskProgress.classList.add("is-hidden");
+        }
+
+        todo.subtasks.forEach((st) => {
+          const li = document.createElement("li");
+          li.className = "subtask-item" + (st.completed ? " is-completed" : "");
+          li.innerHTML =
+            '<label class="subtask-item__label">' +
+              '<input type="checkbox" class="subtask-item__checkbox" ' + (st.completed ? "checked" : "") + ' />' +
+              '<span class="subtask-item__text">' + escapeHtml(st.text) + '</span>' +
+            '</label>' +
+            '<button type="button" class="subtask-item__delete" title="Remove subtask">&times;</button>';
+          li.querySelector(".subtask-item__checkbox").addEventListener("change", () => toggleSubtask(todo.id, st.id));
+          li.querySelector(".subtask-item__delete").addEventListener("click", () => deleteSubtask(todo.id, st.id));
+          subtaskList.appendChild(li);
+        });
+      }
+
+      subtaskToggleBtn.addEventListener("click", () => {
+        const expanded = subtaskContainer.dataset.expanded === "true";
+        if (expanded) {
+          subtaskContainer.dataset.expanded = "false";
+          subtaskToggleBtn.classList.remove("is-expanded");
+        } else {
+          subtaskContainer.dataset.expanded = "true";
+          subtaskToggleBtn.classList.add("is-expanded");
+        }
+      });
+
+      subtaskAddForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const val = subtaskInput.value.trim();
+        if (!val) return;
+        addSubtask(todo.id, val);
+        subtaskInput.value = "";
+      });
+
+      const depContainer = item.querySelector(".todo-item__dependencies");
+      const unmetDeps = getUnmetDependencies(todo);
+      if (unmetDeps.length > 0) {
+        depContainer.classList.remove("is-hidden");
+        depContainer.innerHTML =
+          '<span class="dep-badge dep-badge--blocked" title="Blocked by incomplete tasks">⛔ Blocked by: ' +
+          unmetDeps.map((d) => escapeHtml(d.text)).join(", ") +
+          '</span>';
+      } else if (todo.dependsOn && todo.dependsOn.length > 0) {
+        depContainer.classList.remove("is-hidden");
+        depContainer.innerHTML =
+          '<span class="dep-badge dep-badge--met" title="All dependencies met">✅ Dependencies met</span>';
+      } else {
+        depContainer.classList.add("is-hidden");
+      }
 
       item
         .querySelector(".todo-item__edit-btn")

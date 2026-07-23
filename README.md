@@ -26,6 +26,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - Persists to localStorage (survives page refresh)
 - Responsive layout for desktop and mobile
 - **Productivity Analytics Dashboard** with stats, charts, and a monthly heatmap
+- **Task Dependencies & Subtasks**: break tasks into subtasks with progress tracking; set dependencies between tasks to block completion until prerequisites are met
 
 ## Productivity Dashboard
 
