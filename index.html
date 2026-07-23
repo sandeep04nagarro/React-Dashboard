@@ -205,6 +205,8 @@
               <span class="todo-item__badge todo-item__badge--due"></span>
               <span class="todo-item__badge todo-item__badge--recurrence"></span>
               <span class="todo-item__badge todo-item__badge--reminder"></span>
+              <span class="todo-item__badge todo-item__badge--subtasks"></span>
+              <span class="todo-item__badge todo-item__badge--deps"></span>
             </span>
           </label>
           <div class="todo-item__actions">
@@ -232,6 +234,35 @@
         </div>
 
         <p class="todo-item__notes"></p>
+
+        <div class="todo-item__subtasks">
+          <div class="todo-item__subtask-header">
+            <span class="todo-item__subtask-title">Subtasks</span>
+            <span class="todo-item__subtask-progress"></span>
+          </div>
+          <div class="todo-item__subtask-progress-bar">
+            <div class="todo-item__subtask-progress-fill"></div>
+          </div>
+          <ul class="todo-item__subtask-list"></ul>
+          <div class="todo-item__subtask-add">
+            <input type="text" class="todo-item__subtask-input" placeholder="Add a subtask..." aria-label="Add a subtask" />
+            <button type="button" class="todo-item__subtask-add-btn" title="Add subtask">+</button>
+          </div>
+        </div>
+
+        <div class="todo-item__dependencies">
+          <div class="todo-item__dep-header">
+            <span class="todo-item__dep-title">Dependencies</span>
+            <span class="todo-item__dep-status"></span>
+          </div>
+          <ul class="todo-item__dep-list"></ul>
+          <div class="todo-item__dep-add">
+            <select class="todo-item__dep-select" aria-label="Add a dependency">
+              <option value="">Select a task...</option>
+            </select>
+            <button type="button" class="todo-item__dep-add-btn" title="Add dependency">+</button>
+          </div>
+        </div>
 
         <div class="todo-item__edit" role="group" aria-label="Edit todo">
           <input type="text" class="todo-item__edit-input" aria-label="Todo text" />
