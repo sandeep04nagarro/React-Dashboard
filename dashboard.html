@@ -28,6 +28,9 @@
         <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
         <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
       </button>
+      <span class="nav__hint" id="cmd-trigger" title="Open command palette (Ctrl+K)" role="button" tabindex="0">
+        <kbd>Ctrl</kbd>+<kbd>K</kbd>
+      </span>
     </nav>
 
     <main class="dashboard">
@@ -106,6 +109,21 @@
         </div>
       </section>
     </main>
+
+    <div id="command-palette-overlay" class="command-palette-overlay is-hidden" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="command-palette">
+        <div class="command-palette__input-wrap">
+          <span class="command-palette__prefix" aria-hidden="true">&gt;</span>
+          <input id="command-palette-input" class="command-palette__input" type="text" placeholder="Type a command..." aria-label="Command search" autocomplete="off" />
+        </div>
+        <ul id="command-palette-list" class="command-palette__list" role="listbox"></ul>
+        <div class="command-palette__footer">
+          <span class="command-palette__hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+          <span class="command-palette__hint"><kbd>&crarr;</kbd> select</span>
+          <span class="command-palette__hint"><kbd>esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
 
     <script src="dashboard.js"></script>
   </body>

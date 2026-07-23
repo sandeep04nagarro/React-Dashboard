@@ -1348,4 +1348,8 @@
       }
     }
   });
+
+  const cmdTrigger = $("cmd-trigger");
+  cmdTrigger.addEventListener("click", openCmdPalette);
+  cmdTrigger.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCmdPalette(); } });
 })();

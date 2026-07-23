@@ -841,6 +841,27 @@ body {
   color: var(--muted);
 }
 
+.nav__hint {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.nav__hint:hover { color: var(--text); }
+.nav__hint kbd {
+  font-family: monospace;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--toggle-bg);
+  color: var(--muted);
+}
+
 .command-palette-overlay {
   position: fixed;
   inset: 0;
