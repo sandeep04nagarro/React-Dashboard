@@ -629,3 +629,259 @@ body {
 [data-theme="dark"] .todo-item__snooze-dropdown {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
+
+.todo-item.is-blocked {
+  padding-left: 0.6rem;
+  border-left: 3px solid #f59e0b;
+  margin-left: -0.35rem;
+  background: rgba(245, 158, 11, 0.04);
+}
+.todo-item.is-blocked .todo-item__checkbox { cursor: not-allowed; opacity: 0.5; }
+.todo-item.is-blocked .todo-item__text { color: var(--muted); }
+
+.todo-item__badge--subtasks {
+  color: var(--success);
+  border-color: var(--success);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.todo-item__badge--subtasks.is-all-done {
+  color: #fff;
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.todo-item__badge--deps {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.todo-item__badge--deps.is-blocked {
+  color: #fff;
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.todo-item__subtasks {
+  margin: 0.3rem 0 0.3rem 1.8rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--toggle-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.todo-item__subtasks.is-empty { display: none; }
+.todo-item.is-editing .todo-item__subtasks { display: none; }
+
+.todo-item__subtask-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.todo-item__subtask-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.todo-item__subtask-progress {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.todo-item__subtask-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.4rem;
+}
+.todo-item__subtask-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  transition: width 0.3s ease;
+}
+
+.todo-item__subtask-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.todo-item__subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+}
+.todo-item__subtask-item.is-completed .todo-item__subtask-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.todo-item__subtask-checkbox {
+  width: 0.9rem;
+  height: 0.9rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.todo-item__subtask-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text);
+  word-break: break-word;
+}
+.todo-item__subtask-delete {
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.todo-item__subtask-delete:hover { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+
+.todo-item__subtask-add {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+.todo-item__subtask-input {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card);
+  color: var(--text);
+}
+.todo-item__subtask-input:focus { border-color: var(--primary); }
+.todo-item__subtask-add-btn {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.todo-item__subtask-add-btn:hover { background: var(--primary-hover); }
+
+.todo-item__dependencies {
+  margin: 0.3rem 0 0.3rem 1.8rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--toggle-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.todo-item__dependencies.is-empty { display: none; }
+.todo-item.is-editing .todo-item__dependencies { display: none; }
+
+.todo-item__dep-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.todo-item__dep-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.todo-item__dep-status {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.todo-item__dep-status::first-letter { }
+
+.todo-item__dep-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.todo-item__dep-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+}
+.todo-item__dep-item.is-completed .todo-item__dep-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.todo-item__dep-check {
+  font-size: 0.8rem;
+  color: var(--success);
+  flex-shrink: 0;
+}
+.todo-item__dep-item:not(.is-completed) .todo-item__dep-check { color: var(--muted); }
+.todo-item__dep-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text);
+  word-break: break-word;
+}
+.todo-item__dep-remove {
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.todo-item__dep-remove:hover { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+
+.todo-item__dep-add {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+.todo-item__dep-select {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+.todo-item__dep-select:focus { border-color: var(--primary); }
+.todo-item__dep-add-btn {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.todo-item__dep-add-btn:hover { background: var(--primary-hover); }

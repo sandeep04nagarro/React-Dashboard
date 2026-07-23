@@ -177,6 +177,16 @@
         manualOrder: Number.isFinite(t.manualOrder) ? t.manualOrder : null,
         createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
         completedAt: t.completed ? t.completedAt || null : null,
+        subtasks: Array.isArray(t.subtasks)
+          ? t.subtasks.map((s) => ({
+              id: s.id || uid(),
+              text: typeof s.text === "string" ? s.text : "",
+              completed: !!s.completed,
+            }))
+          : [],
+        dependencies: Array.isArray(t.dependencies)
+          ? t.dependencies.filter((d) => typeof d === "string")
+          : [],
       }));
     } catch (e) {
       todos = [];
@@ -355,7 +365,9 @@
       pinned: false,
       manualOrder: maxOrder + 1,
       createdAt: Date.now(),
-      completedAt: null
+      completedAt: null,
+      subtasks: [],
+      dependencies: [],
     });
     save();
     render();
@@ -388,6 +400,7 @@
   function toggleTodo(id) {
     const todo = todos.find((t) => t.id === id);
     if (todo) {
+      if (!todo.completed && isBlockedByDependencies(todo)) return;
       todo.completed = !todo.completed;
       todo.completedAt = todo.completed ? nowTs() : null;
       save();
@@ -430,6 +443,10 @@
       manualOrder: maxOrder + 1,
       createdAt: nowTs(),
       completedAt: null,
+      subtasks: Array.isArray(todo.subtasks)
+        ? todo.subtasks.map((s) => ({ id: uid(), text: s.text, completed: false }))
+        : [],
+      dependencies: Array.isArray(todo.dependencies) ? todo.dependencies.slice() : [],
     };
     const idx = todos.findIndex((t) => t.id === id);
     todos.splice(idx, 0, copy);
@@ -439,14 +456,91 @@
 
   function deleteTodo(id) {
     todos = todos.filter((t) => t.id !== id);
+    todos.forEach((t) => {
+      if (Array.isArray(t.dependencies)) {
+        t.dependencies = t.dependencies.filter((d) => d !== id);
+      }
+    });
     save();
     render();
   }
 
   function clearCompletedTodos() {
+    const completedIds = new Set(todos.filter((t) => t.completed).map((t) => t.id));
     todos = todos.filter((t) => !t.completed);
+    todos.forEach((t) => {
+      if (Array.isArray(t.dependencies)) {
+        t.dependencies = t.dependencies.filter((d) => !completedIds.has(d));
+      }
+    });
     save();
     render();
+  }
+
+  function addSubtask(todoId, text) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo) return;
+    if (!Array.isArray(todo.subtasks)) todo.subtasks = [];
+    todo.subtasks.push({ id: uid(), text: text.trim(), completed: false });
+    save();
+    render();
+  }
+
+  function toggleSubtask(todoId, subtaskId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo || !Array.isArray(todo.subtasks)) return;
+    const subtask = todo.subtasks.find((s) => s.id === subtaskId);
+    if (!subtask) return;
+    subtask.completed = !subtask.completed;
+    autoCompleteParent(todo);
+    save();
+    render();
+  }
+
+  function deleteSubtask(todoId, subtaskId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo || !Array.isArray(todo.subtasks)) return;
+    todo.subtasks = todo.subtasks.filter((s) => s.id !== subtaskId);
+    save();
+    render();
+  }
+
+  function autoCompleteParent(todo) {
+    if (!Array.isArray(todo.subtasks) || todo.subtasks.length === 0) return;
+    const allDone = todo.subtasks.every((s) => s.completed);
+    if (allDone && !todo.completed) {
+      todo.completed = true;
+      todo.completedAt = nowTs();
+    } else if (!allDone && todo.completed) {
+      todo.completed = false;
+      todo.completedAt = null;
+    }
+  }
+
+  function addDependency(todoId, depId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo || !depId || depId === todoId) return;
+    if (!Array.isArray(todo.dependencies)) todo.dependencies = [];
+    if (todo.dependencies.includes(depId)) return;
+    todo.dependencies.push(depId);
+    save();
+    render();
+  }
+
+  function removeDependency(todoId, depId) {
+    const todo = todos.find((t) => t.id === todoId);
+    if (!todo || !Array.isArray(todo.dependencies)) return;
+    todo.dependencies = todo.dependencies.filter((d) => d !== depId);
+    save();
+    render();
+  }
+
+  function isBlockedByDependencies(todo) {
+    if (!Array.isArray(todo.dependencies) || todo.dependencies.length === 0) return false;
+    return todo.dependencies.some((depId) => {
+      const dep = todos.find((t) => t.id === depId);
+      return dep && !dep.completed;
+    });
   }
 
   function nextOccurrence(anchor, intervalDays) {
@@ -477,6 +571,10 @@
       manualOrder: maxOrder + 1,
       createdAt: Date.now(),
       completedAt: null,
+      subtasks: Array.isArray(original.subtasks)
+        ? original.subtasks.map((s) => ({ id: uid(), text: s.text, completed: false }))
+        : [],
+      dependencies: [],
     };
     todos.unshift(clone);
   }
@@ -742,6 +840,144 @@
       const notesEl = item.querySelector(".todo-item__notes");
       notesEl.textContent = todo.notes || "";
       if (!todo.notes) notesEl.classList.add("is-hidden");
+
+      item.classList.toggle("is-blocked", isBlockedByDependencies(todo));
+
+      const subtasks = Array.isArray(todo.subtasks) ? todo.subtasks : [];
+      const subtasksBadge = item.querySelector(".todo-item__badge--subtasks");
+      if (subtasks.length > 0) {
+        const subDone = subtasks.filter((s) => s.completed).length;
+        subtasksBadge.textContent = "☑ " + subDone + "/" + subtasks.length;
+        subtasksBadge.classList.toggle("is-all-done", subDone === subtasks.length);
+      } else {
+        subtasksBadge.remove();
+      }
+
+      const deps = Array.isArray(todo.dependencies) ? todo.dependencies : [];
+      const depsBadge = item.querySelector(".todo-item__badge--deps");
+      if (deps.length > 0) {
+        const blocked = isBlockedByDependencies(todo);
+        depsBadge.textContent = blocked ? "🔗 Blocked (" + deps.length + " dep" + (deps.length === 1 ? "" : "s") + ")" : "🔗 Ready (" + deps.length + " dep" + (deps.length === 1 ? "" : "s") + ")";
+        depsBadge.classList.toggle("is-blocked", blocked);
+      } else {
+        depsBadge.remove();
+      }
+
+      const subtaskSection = item.querySelector(".todo-item__subtasks");
+      const subtaskList = subtaskSection.querySelector(".todo-item__subtask-list");
+      const subtaskProgress = subtaskSection.querySelector(".todo-item__subtask-progress");
+      const subtaskProgressFill = subtaskSection.querySelector(".todo-item__subtask-progress-fill");
+
+      if (subtasks.length > 0) {
+        const subDone = subtasks.filter((s) => s.completed).length;
+        const pct = Math.round((subDone / subtasks.length) * 100);
+        subtaskProgress.textContent = subDone + "/" + subtasks.length + " completed (" + pct + "%)";
+        subtaskProgressFill.style.width = pct + "%";
+
+        subtasks.forEach((st) => {
+          const li = document.createElement("li");
+          li.className = "todo-item__subtask-item" + (st.completed ? " is-completed" : "");
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = st.completed;
+          cb.className = "todo-item__subtask-checkbox";
+          cb.addEventListener("change", () => toggleSubtask(todo.id, st.id));
+          const txt = document.createElement("span");
+          txt.className = "todo-item__subtask-text";
+          txt.textContent = st.text;
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "todo-item__subtask-delete";
+          del.textContent = "×";
+          del.title = "Remove subtask";
+          del.addEventListener("click", () => deleteSubtask(todo.id, st.id));
+          li.appendChild(cb);
+          li.appendChild(txt);
+          li.appendChild(del);
+          subtaskList.appendChild(li);
+        });
+      } else {
+        subtaskSection.classList.add("is-empty");
+      }
+
+      const depSection = item.querySelector(".todo-item__dependencies");
+      const depList = depSection.querySelector(".todo-item__dep-list");
+      const depStatus = depSection.querySelector(".todo-item__dep-status");
+
+      if (deps.length > 0) {
+        const blocked = isBlockedByDependencies(todo);
+        depStatus.textContent = blocked ? "⚠ Blocked — complete dependencies first" : "✓ All dependencies met";
+
+        deps.forEach((depId) => {
+          const depTodo = todos.find((t) => t.id === depId);
+          if (!depTodo) return;
+          const li = document.createElement("li");
+          li.className = "todo-item__dep-item" + (depTodo.completed ? " is-completed" : "");
+          const status = document.createElement("span");
+          status.className = "todo-item__dep-check";
+          status.textContent = depTodo.completed ? "✓" : "○";
+          const txt = document.createElement("span");
+          txt.className = "todo-item__dep-text";
+          txt.textContent = depTodo.text;
+          const rem = document.createElement("button");
+          rem.type = "button";
+          rem.className = "todo-item__dep-remove";
+          rem.textContent = "×";
+          rem.title = "Remove dependency";
+          rem.addEventListener("click", () => removeDependency(todo.id, depId));
+          li.appendChild(status);
+          li.appendChild(txt);
+          li.appendChild(rem);
+          depList.appendChild(li);
+        });
+      } else {
+        depSection.classList.add("is-empty");
+      }
+
+      const depSelect = depSection.querySelector(".todo-item__dep-select");
+      const availableDeps = todos.filter(
+        (t) => t.id !== todo.id && !(Array.isArray(todo.dependencies) && todo.dependencies.includes(t.id))
+      );
+      if (availableDeps.length === 0) {
+        depSelect.disabled = true;
+        depSelect.querySelector("option").textContent = "No available tasks";
+      } else {
+        availableDeps.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.text.length > 40 ? t.text.slice(0, 40) + "…" : t.text;
+          depSelect.appendChild(opt);
+        });
+      }
+
+      const subtaskInput = subtaskSection.querySelector(".todo-item__subtask-input");
+      const subtaskAddBtn = subtaskSection.querySelector(".todo-item__subtask-add-btn");
+      subtaskAddBtn.addEventListener("click", () => {
+        const val = subtaskInput.value.trim();
+        if (val) {
+          addSubtask(todo.id, val);
+          subtaskInput.value = "";
+        }
+      });
+      subtaskInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const val = subtaskInput.value.trim();
+          if (val) {
+            addSubtask(todo.id, val);
+            subtaskInput.value = "";
+          }
+        }
+      });
+
+      const depAddBtn = depSection.querySelector(".todo-item__dep-add-btn");
+      depAddBtn.addEventListener("click", () => {
+        const val = depSelect.value;
+        if (val) {
+          addDependency(todo.id, val);
+          depSelect.value = "";
+        }
+      });
 
       item
         .querySelector(".todo-item__edit-btn")
