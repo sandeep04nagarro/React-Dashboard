@@ -1202,4 +1202,150 @@
   }
   checkReminders();
   setInterval(checkReminders, 30000);
+
+  // --- Command Palette ---
+  const cmdOverlay = $("command-palette-overlay");
+  const cmdInput = $("command-palette-input");
+  const cmdList = $("command-palette-list");
+  let cmdActiveIndex = 0;
+
+  const COMMANDS = [
+    { id: "add-task", icon: "＋", label: "Add Task", shortcut: "", action() { input.focus(); input.scrollIntoView({ behavior: "smooth", block: "center" }); } },
+    { id: "show-all", icon: "📋", label: "Show All Tasks", shortcut: "", action() { setFilter("all"); } },
+    { id: "show-active", icon: "🔵", label: "Show Active", shortcut: "", action() { setFilter("active"); } },
+    { id: "show-completed", icon: "✅", label: "Show Completed", shortcut: "", action() { setFilter("completed"); } },
+    { id: "show-favorites", icon: "⭐", label: "Show Favorites", shortcut: "", action() { setFilter("favorites"); } },
+    { id: "show-pinned", icon: "📌", label: "Show Pinned", shortcut: "", action() { setFilter("pinned"); } },
+    { id: "toggle-theme", icon: "🌓", label: "Toggle Dark Mode", shortcut: "Ctrl+Shift+D", action() { themeToggle.click(); } },
+    { id: "clear-search", icon: "🔍", label: "Clear Search", shortcut: "", action() { searchInput.value = ""; currentSearch = ""; render(); } },
+    { id: "clear-completed", icon: "🗑", label: "Clear Completed Tasks", shortcut: "", action() { clearCompletedTodos(); } },
+    { id: "open-dashboard", icon: "📊", label: "Open Dashboard", shortcut: "", action() { window.location.href = "dashboard.html"; } },
+    { id: "sort-newest", icon: "🕐", label: "Sort: Newest First", shortcut: "", action() { setSort("created"); } },
+    { id: "sort-priority", icon: "⚡", label: "Sort: Priority", shortcut: "", action() { setSort("priority"); } },
+    { id: "sort-due", icon: "📅", label: "Sort: Due Date", shortcut: "", action() { setSort("due"); } },
+    { id: "sort-alpha", icon: "🔤", label: "Sort: A-Z", shortcut: "", action() { setSort("alpha"); } },
+    { id: "enable-notifications", icon: "🔔", label: "Enable Notifications", shortcut: "", action() { requestNotificationPermission(); } },
+  ];
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll(".filters__btn").forEach((b) => {
+      const active = b.dataset.filter === filter;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-selected", String(active));
+    });
+    render();
+  }
+
+  function setSort(sort) {
+    currentSort = sort;
+    sortSelect.value = sort;
+    render();
+  }
+
+  function openCmdPalette() {
+    cmdOverlay.classList.remove("is-hidden");
+    cmdInput.value = "";
+    cmdActiveIndex = 0;
+    renderCmdList();
+    cmdInput.focus();
+  }
+
+  function closeCmdPalette() {
+    cmdOverlay.classList.add("is-hidden");
+    cmdInput.value = "";
+  }
+
+  function renderCmdList() {
+    const query = cmdInput.value.trim().toLowerCase();
+    const matches = COMMANDS.filter((c) => c.label.toLowerCase().includes(query));
+
+    cmdList.innerHTML = "";
+    if (matches.length === 0) {
+      const li = document.createElement("li");
+      li.className = "command-palette__empty";
+      li.textContent = "No matching commands";
+      cmdList.appendChild(li);
+      return;
+    }
+
+    if (cmdActiveIndex >= matches.length) cmdActiveIndex = 0;
+
+    matches.forEach((cmd, i) => {
+      const li = document.createElement("li");
+      li.className = "command-palette__item" + (i === cmdActiveIndex ? " is-active" : "");
+      li.setAttribute("role", "option");
+      li.dataset.cmdId = cmd.id;
+
+      let html = '<span class="command-palette__item-icon" aria-hidden="true">' + cmd.icon + '</span>';
+      html += '<span class="command-palette__item-label">' + escapeHtml(cmd.label) + '</span>';
+      if (cmd.shortcut) {
+        html += '<span class="command-palette__item-shortcut">' + cmd.shortcut + '</span>';
+      }
+      li.innerHTML = html;
+
+      li.addEventListener("click", () => {
+        cmd.action();
+        closeCmdPalette();
+      });
+      li.addEventListener("mouseenter", () => {
+        cmdActiveIndex = i;
+        highlightCmdItem();
+      });
+
+      cmdList.appendChild(li);
+    });
+  }
+
+  function highlightCmdItem() {
+    const items = cmdList.querySelectorAll(".command-palette__item");
+    items.forEach((el, i) => el.classList.toggle("is-active", i === cmdActiveIndex));
+  }
+
+  function executeActiveCmd() {
+    const items = cmdList.querySelectorAll(".command-palette__item");
+    if (items[cmdActiveIndex]) {
+      items[cmdActiveIndex].click();
+    }
+  }
+
+  cmdInput.addEventListener("input", () => {
+    cmdActiveIndex = 0;
+    renderCmdList();
+  });
+
+  cmdInput.addEventListener("keydown", (e) => {
+    const items = cmdList.querySelectorAll(".command-palette__item");
+    const count = items.length;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      cmdActiveIndex = (cmdActiveIndex + 1) % count;
+      highlightCmdItem();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      cmdActiveIndex = (cmdActiveIndex - 1 + count) % count;
+      highlightCmdItem();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      executeActiveCmd();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeCmdPalette();
+    }
+  });
+
+  cmdOverlay.addEventListener("click", (e) => {
+    if (e.target === cmdOverlay) closeCmdPalette();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      if (cmdOverlay.classList.contains("is-hidden")) {
+        openCmdPalette();
+      } else {
+        closeCmdPalette();
+      }
+    }
+  });
 })();
