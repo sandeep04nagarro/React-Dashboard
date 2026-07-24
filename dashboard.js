@@ -581,4 +581,128 @@
   });
 
   renderAll();
+
+  /* ---- Command Palette ---- */
+  var cmdOverlay = document.getElementById("command-palette-overlay");
+  var cmdInput = document.getElementById("command-palette-input");
+  var cmdList = document.getElementById("command-palette-list");
+  var cmdTrigger = document.getElementById("cmd-trigger");
+
+  var COMMANDS = [
+    { id: "toggle-theme", icon: "🌓", label: "Toggle Dark Mode", action: function () { var next = currentTheme() === "dark" ? "light" : "dark"; applyTheme(next); try { localStorage.setItem(THEME_KEY, next); } catch (e) {} } },
+    { id: "open-todos", icon: "📝", label: "Open Todo List", action: function () { window.location.href = "index.html"; } },
+  ];
+
+  var cmdActiveIndex = 0;
+
+  function openCmdPalette() {
+    cmdOverlay.classList.remove("is-hidden");
+    cmdInput.value = "";
+    cmdActiveIndex = 0;
+    renderCmdList();
+    cmdInput.focus();
+  }
+
+  function closeCmdPalette() {
+    cmdOverlay.classList.add("is-hidden");
+    cmdInput.value = "";
+  }
+
+  function renderCmdList() {
+    var query = cmdInput.value.trim().toLowerCase();
+    var matches = COMMANDS.filter(function (c) { return c.label.toLowerCase().includes(query); });
+
+    cmdList.innerHTML = "";
+    if (matches.length === 0) {
+      var li = document.createElement("li");
+      li.className = "command-palette__empty";
+      li.textContent = "No matching commands";
+      cmdList.appendChild(li);
+      return;
+    }
+
+    if (cmdActiveIndex >= matches.length) cmdActiveIndex = 0;
+
+    matches.forEach(function (cmd, i) {
+      var li = document.createElement("li");
+      li.className = "command-palette__item" + (i === cmdActiveIndex ? " is-active" : "");
+      li.setAttribute("role", "option");
+      li.dataset.cmdId = cmd.id;
+
+      li.innerHTML =
+        '<span class="command-palette__item-icon" aria-hidden="true">' + cmd.icon + '</span>' +
+        '<span class="command-palette__item-label">' + cmd.label + '</span>';
+
+      li.addEventListener("click", function () {
+        cmd.action();
+        closeCmdPalette();
+      });
+      li.addEventListener("mouseenter", function () {
+        cmdActiveIndex = i;
+        highlightCmdItem();
+      });
+
+      cmdList.appendChild(li);
+    });
+  }
+
+  function highlightCmdItem() {
+    var items = cmdList.querySelectorAll(".command-palette__item");
+    items.forEach(function (el, i) { el.classList.toggle("is-active", i === cmdActiveIndex); });
+  }
+
+  function executeActiveCmd() {
+    var items = cmdList.querySelectorAll(".command-palette__item");
+    if (items[cmdActiveIndex]) {
+      items[cmdActiveIndex].click();
+    }
+  }
+
+  cmdInput.addEventListener("input", function () {
+    cmdActiveIndex = 0;
+    renderCmdList();
+  });
+
+  cmdInput.addEventListener("keydown", function (e) {
+    var items = cmdList.querySelectorAll(".command-palette__item");
+    var count = items.length;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      cmdActiveIndex = (cmdActiveIndex + 1) % count;
+      highlightCmdItem();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      cmdActiveIndex = (cmdActiveIndex - 1 + count) % count;
+      highlightCmdItem();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      executeActiveCmd();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeCmdPalette();
+    }
+  });
+
+  cmdOverlay.addEventListener("click", function (e) {
+    if (e.target === cmdOverlay) closeCmdPalette();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      if (cmdOverlay.classList.contains("is-hidden")) {
+        openCmdPalette();
+      } else {
+        closeCmdPalette();
+      }
+    }
+  });
+
+  cmdTrigger.addEventListener("click", openCmdPalette);
+  cmdTrigger.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openCmdPalette();
+    }
+  });
 })();
