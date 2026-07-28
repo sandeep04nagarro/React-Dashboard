@@ -92,6 +92,18 @@
 
   const root = document.documentElement;
 
+  const toastEl = $("toast");
+  let toastTimer = null;
+  function showToast(message) {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastEl.textContent = message;
+    toastEl.classList.add("is-visible");
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove("is-visible");
+      toastTimer = null;
+    }, 3000);
+  }
+
   function currentTheme() {
     return root.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
@@ -445,9 +457,12 @@
       text: todo.text,
       notes: todo.notes || "",
       completed: false,
+      priority: todo.priority || "medium",
+      category: todo.category || "general",
+      color: todo.color || "",
+      dueDate: todo.dueDate || "",
       favorite: !!todo.favorite,
       pinned: !!todo.pinned,
-      color: todo.color || "",
       recurrence: todo.recurrence || "",
       recurrenceInterval: todo.recurrenceInterval || 1,
       recurrenceAnchor: todo.recurrenceAnchor || null,
@@ -462,6 +477,7 @@
     todos.splice(idx, 0, copy);
     save();
     render();
+    showToast("Task duplicated successfully.");
   }
 
   function deleteTodo(id) {
