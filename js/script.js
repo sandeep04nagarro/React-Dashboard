@@ -464,7 +464,37 @@
     render();
   }
 
+  let undoTimeout = null;
+  let deletedTodo = null;
+
+  function showUndoToast() {
+    const toast = $("undo-toast");
+    const text = toast.querySelector(".undo-toast__text");
+    text.textContent = '"' + deletedTodo.text + '" deleted.';
+    toast.classList.remove("is-hidden");
+
+    if (undoTimeout) clearTimeout(undoTimeout);
+    undoTimeout = setTimeout(() => {
+      toast.classList.add("is-hidden");
+      deletedTodo = null;
+      undoTimeout = null;
+    }, 5000);
+  }
+
+  function hideUndoToast() {
+    const toast = $("undo-toast");
+    toast.classList.add("is-hidden");
+    if (undoTimeout) {
+      clearTimeout(undoTimeout);
+      undoTimeout = null;
+    }
+    deletedTodo = null;
+  }
+
   function deleteTodo(id) {
+    const idx = todos.findIndex((t) => t.id === id);
+    if (idx === -1) return;
+    deletedTodo = todos[idx];
     todos = todos.filter((t) => t.id !== id);
     todos.forEach((t) => {
       if (t.dependsOn) {
@@ -473,6 +503,7 @@
     });
     save();
     render();
+    showUndoToast();
   }
 
   function clearCompletedTodos() {
@@ -1119,6 +1150,18 @@
   }
   recurrenceSelect.addEventListener("change", syncRecurrenceCustom);
   syncRecurrenceCustom();
+
+  const undoToast = $("undo-toast");
+  undoToast.querySelector(".undo-toast__btn").addEventListener("click", () => {
+    if (deletedTodo) {
+      const maxOrder = todos.reduce((max, t) => Math.max(max, t.manualOrder || 0), 0);
+      deletedTodo.manualOrder = maxOrder + 1;
+      todos.unshift(deletedTodo);
+      save();
+      render();
+      hideUndoToast();
+    }
+  });
 
   notifPermissionBtn.addEventListener("click", requestNotificationPermission);
 
