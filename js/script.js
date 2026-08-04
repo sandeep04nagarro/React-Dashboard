@@ -13,6 +13,7 @@
   let currentSort = "created";
   let snoozedReminders = {};
   let firedReminders = {};
+  let randomPickedTask = null;
 
   const PRIORITIES = ["low", "medium", "high"];
   const PRIORITY_RANK = { low: 0, medium: 1, high: 2 };
@@ -638,6 +639,21 @@
     return result;
   }
 
+  function getActiveTodos() {
+    return todos.filter((t) => !t.completed);
+  }
+
+  function pickRandomTask() {
+    const activeTodos = getActiveTodos();
+    if (activeTodos.length === 0) {
+      randomPickedTask = null;
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * activeTodos.length);
+    randomPickedTask = activeTodos[randomIndex];
+    return randomPickedTask;
+  }
+
   function formatDueDate(dueDate) {
     if (!dueDate) return "";
     const today = new Date();
@@ -1177,6 +1193,27 @@
   }
   recurrenceSelect.addEventListener("change", syncRecurrenceCustom);
   syncRecurrenceCustom();
+
+  const randomPickBtn = $("random-pick-btn");
+  const randomPickDisplay = $("random-pick-display");
+  const randomPickTask = $("random-pick-task");
+  const randomPickMessage = $("random-pick-message");
+
+  if (randomPickBtn) {
+    randomPickBtn.addEventListener("click", () => {
+      const picked = pickRandomTask();
+      if (picked) {
+        randomPickTask.textContent = picked.text;
+        randomPickDisplay.classList.remove("is-hidden");
+        randomPickMessage.classList.add("is-hidden");
+      } else {
+        randomPickDisplay.classList.add("is-hidden");
+        randomPickMessage.classList.remove("is-hidden");
+        randomPickMessage.textContent = "No active tasks available.";
+      }
+      render();
+    });
+  }
 
   const undoToast = $("undo-toast");
   undoToast.querySelector(".undo-toast__btn").addEventListener("click", () => {

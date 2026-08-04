@@ -509,6 +509,39 @@ body {
   transition: width 0.3s ease;
 }
 
+.random-picker {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+.random-picker__btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+.random-picker__btn:hover { background: var(--primary-hover); }
+.random-picker__btn:active { transform: translateY(1px); }
+.random-picker__display {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  animation: appear 0.18s ease;
+}
+.random-picker__label { font-size: 0.85rem; color: var(--muted); }
+.random-picker__task { font-size: 1rem; color: var(--text); word-break: break-word; }
+.random-picker__message { margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted); text-align: center; }
+
 .nav {
   width: 100%;
   max-width: 520px;

@@ -192,6 +192,15 @@
         </div>
       </section>
 
+      <section class="random-picker" aria-label="Random task picker">
+        <button id="random-pick-btn" class="random-picker__btn" type="button">Pick Random Task</button>
+        <div id="random-pick-display" class="random-picker__display is-hidden" role="status" aria-live="polite">
+          <span class="random-picker__label">Selected task: </span>
+          <strong id="random-pick-task" class="random-picker__task"></strong>
+        </div>
+        <p id="random-pick-message" class="random-picker__message is-hidden" role="status" aria-live="polite"></p>
+      </section>
+
       <footer class="app__footer">
         <span id="items-left" class="app__count">0 items left</span>
         <button id="clear-completed" class="app__clear" type="button" disabled>Clear completed</button>
