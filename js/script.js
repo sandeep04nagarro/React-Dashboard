@@ -89,6 +89,7 @@
     $("reminder-1day"),
   ];
   const reminderCustomInput = $("reminder-custom-minutes");
+  const randomPickerBtn = $("random-picker");
 
   const root = document.documentElement;
 
@@ -805,6 +806,30 @@
     return isDependencyMet(todo.id);
   }
 
+  function pickRandomTask() {
+    const visible = filtered();
+    const active = visible.filter((t) => !t.completed);
+    const pool = active.length > 0 ? active : visible;
+    if (pool.length === 0) {
+      emptyState.textContent =
+        todos.length === 0
+          ? "No todos yet. Add one above!"
+          : "No visible tasks to pick right now.";
+      return;
+    }
+
+    document.querySelectorAll(".todo-item.is-picked").forEach((el) => {
+      el.classList.remove("is-picked");
+    });
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    const item = document.querySelector('.todo-item[data-id="' + chosen.id + '"]');
+    if (item) {
+      item.classList.add("is-picked");
+      item.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   function render() {
     list.innerHTML = "";
     const visible = filtered();
@@ -1144,6 +1169,8 @@
     render();
   });
 
+  randomPickerBtn.addEventListener("click", pickRandomTask);
+
   function syncRecurrenceCustom() {
     const show = recurrenceSelect.value === "custom";
     recurrenceCustom.classList.toggle("is-hidden", !show);
@@ -1262,6 +1289,7 @@
     { id: "toggle-theme", icon: "🌓", label: "Toggle Dark Mode", shortcut: "Ctrl+Shift+D", action() { themeToggle.click(); } },
     { id: "clear-search", icon: "🔍", label: "Clear Search", shortcut: "", action() { searchInput.value = ""; currentSearch = ""; render(); } },
     { id: "clear-completed", icon: "🗑", label: "Clear Completed Tasks", shortcut: "", action() { clearCompletedTodos(); } },
+    { id: "random-task", icon: "🎲", label: "Pick Random Task", shortcut: "", action() { pickRandomTask(); } },
     { id: "open-dashboard", icon: "📊", label: "Open Dashboard", shortcut: "", action() { window.location.href = "dashboard.html"; } },
     { id: "sort-newest", icon: "🕐", label: "Sort: Newest First", shortcut: "", action() { setSort("created"); } },
     { id: "sort-priority", icon: "⚡", label: "Sort: Priority", shortcut: "", action() { setSort("priority"); } },
