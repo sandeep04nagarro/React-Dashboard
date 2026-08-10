@@ -13,6 +13,7 @@
   let currentSort = "created";
   let snoozedReminders = {};
   let firedReminders = {};
+  let randomPickedTask = null;
 
   const PRIORITIES = ["low", "medium", "high"];
   const PRIORITY_RANK = { low: 0, medium: 1, high: 2 };
@@ -89,6 +90,7 @@
     $("reminder-1day"),
   ];
   const reminderCustomInput = $("reminder-custom-minutes");
+  const randomPickerBtn = $("random-picker");
 
   const root = document.documentElement;
 
@@ -637,6 +639,21 @@
     return result;
   }
 
+  function getActiveTodos() {
+    return todos.filter((t) => !t.completed);
+  }
+
+  function pickRandomTask() {
+    const activeTodos = getActiveTodos();
+    if (activeTodos.length === 0) {
+      randomPickedTask = null;
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * activeTodos.length);
+    randomPickedTask = activeTodos[randomIndex];
+    return randomPickedTask;
+  }
+
   function formatDueDate(dueDate) {
     if (!dueDate) return "";
     const today = new Date();
@@ -803,6 +820,30 @@
 
   function canCompleteTodo(todo) {
     return isDependencyMet(todo.id);
+  }
+
+  function pickRandomTask() {
+    const visible = filtered();
+    const active = visible.filter((t) => !t.completed);
+    const pool = active.length > 0 ? active : visible;
+    if (pool.length === 0) {
+      emptyState.textContent =
+        todos.length === 0
+          ? "No todos yet. Add one above!"
+          : "No visible tasks to pick right now.";
+      return;
+    }
+
+    document.querySelectorAll(".todo-item.is-picked").forEach((el) => {
+      el.classList.remove("is-picked");
+    });
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    const item = document.querySelector('.todo-item[data-id="' + chosen.id + '"]');
+    if (item) {
+      item.classList.add("is-picked");
+      item.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
 
   function render() {
@@ -1144,12 +1185,35 @@
     render();
   });
 
+  randomPickerBtn.addEventListener("click", pickRandomTask);
+
   function syncRecurrenceCustom() {
     const show = recurrenceSelect.value === "custom";
     recurrenceCustom.classList.toggle("is-hidden", !show);
   }
   recurrenceSelect.addEventListener("change", syncRecurrenceCustom);
   syncRecurrenceCustom();
+
+  const randomPickBtn = $("random-pick-btn");
+  const randomPickDisplay = $("random-pick-display");
+  const randomPickTask = $("random-pick-task");
+  const randomPickMessage = $("random-pick-message");
+
+  if (randomPickBtn) {
+    randomPickBtn.addEventListener("click", () => {
+      const picked = pickRandomTask();
+      if (picked) {
+        randomPickTask.textContent = picked.text;
+        randomPickDisplay.classList.remove("is-hidden");
+        randomPickMessage.classList.add("is-hidden");
+      } else {
+        randomPickDisplay.classList.add("is-hidden");
+        randomPickMessage.classList.remove("is-hidden");
+        randomPickMessage.textContent = "No active tasks available.";
+      }
+      render();
+    });
+  }
 
   const undoToast = $("undo-toast");
   undoToast.querySelector(".undo-toast__btn").addEventListener("click", () => {
@@ -1262,6 +1326,7 @@
     { id: "toggle-theme", icon: "🌓", label: "Toggle Dark Mode", shortcut: "Ctrl+Shift+D", action() { themeToggle.click(); } },
     { id: "clear-search", icon: "🔍", label: "Clear Search", shortcut: "", action() { searchInput.value = ""; currentSearch = ""; render(); } },
     { id: "clear-completed", icon: "🗑", label: "Clear Completed Tasks", shortcut: "", action() { clearCompletedTodos(); } },
+    { id: "random-task", icon: "🎲", label: "Pick Random Task", shortcut: "", action() { pickRandomTask(); } },
     { id: "open-dashboard", icon: "📊", label: "Open Dashboard", shortcut: "", action() { window.location.href = "dashboard.html"; } },
     { id: "sort-newest", icon: "🕐", label: "Sort: Newest First", shortcut: "", action() { setSort("created"); } },
     { id: "sort-priority", icon: "⚡", label: "Sort: Priority", shortcut: "", action() { setSort("priority"); } },

@@ -156,6 +156,10 @@
               <option value="manual">Manual (drag to reorder)</option>
             </select>
           </label>
+          <button id="random-picker" class="toolbar__random-btn" type="button" title="Pick a random task">
+            <span class="toolbar__random-btn-icon" aria-hidden="true">🎲</span>
+            <span class="toolbar__random-btn-label">Pick a random task</span>
+          </button>
         </div>
       </div>
 
@@ -186,6 +190,15 @@
         >
           <div id="progress-fill" class="progress__fill"></div>
         </div>
+      </section>
+
+      <section class="random-picker" aria-label="Random task picker">
+        <button id="random-pick-btn" class="random-picker__btn" type="button">Pick Random Task</button>
+        <div id="random-pick-display" class="random-picker__display is-hidden" role="status" aria-live="polite">
+          <span class="random-picker__label">Selected task: </span>
+          <strong id="random-pick-task" class="random-picker__task"></strong>
+        </div>
+        <p id="random-pick-message" class="random-picker__message is-hidden" role="status" aria-live="polite"></p>
       </section>
 
       <footer class="app__footer">

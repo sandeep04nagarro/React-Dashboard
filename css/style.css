@@ -171,6 +171,23 @@ body {
   transition: border-color 0.15s;
 }
 .toolbar__select:focus { border-color: var(--primary); }
+.toolbar__random-btn {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.05s;
+}
+.toolbar__random-btn:hover { background: var(--primary); color: #fff; }
+.toolbar__random-btn:active { transform: translateY(1px); }
 
 .filters {
   display: flex;
@@ -346,6 +363,17 @@ body {
 }
 .todo-item.is-pinned.is-overdue { border-left: 3px solid var(--danger); }
 .todo-item.is-favorite .todo-item__text { font-weight: 600; }
+.todo-item.is-picked {
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18);
+  animation: pickedPulse 0.6s ease;
+}
+@keyframes pickedPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
 .todo-item__delete {
   font-size: 1.4rem;
   line-height: 1;
@@ -480,6 +508,39 @@ body {
   background: linear-gradient(90deg, var(--primary), var(--success));
   transition: width 0.3s ease;
 }
+
+.random-picker {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+.random-picker__btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+.random-picker__btn:hover { background: var(--primary-hover); }
+.random-picker__btn:active { transform: translateY(1px); }
+.random-picker__display {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  animation: appear 0.18s ease;
+}
+.random-picker__label { font-size: 0.85rem; color: var(--muted); }
+.random-picker__task { font-size: 1rem; color: var(--text); word-break: break-word; }
+.random-picker__message { margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted); text-align: center; }
 
 .nav {
   width: 100%;
