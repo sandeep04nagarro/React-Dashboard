@@ -189,6 +189,33 @@ body {
 .toolbar__random-btn:hover { background: var(--primary); color: #fff; }
 .toolbar__random-btn:active { transform: translateY(1px); }
 
+.toolbar__io {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.toolbar__io-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.05s;
+}
+.toolbar__io-btn:hover { border-color: var(--primary); color: var(--primary); }
+.toolbar__io-btn:active { transform: translateY(1px); }
+.toolbar__io-icon { font-size: 0.95rem; line-height: 1; }
+.toolbar__io-file {
+  display: none;
+}
+
 .filters {
   display: flex;
   gap: 0.4rem;
@@ -1089,6 +1116,56 @@ body {
   font-size: 0.88rem;
 }
 
+.import-modal {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+.import-modal__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.import-modal__desc {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.import-modal__desc strong { color: var(--text); }
+.import-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.import-modal__btn {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.import-modal__btn:hover { border-color: var(--primary); color: var(--primary); }
+.import-modal__btn--primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.import-modal__btn--primary:hover {
+  background: var(--primary);
+  color: #fff;
+  filter: brightness(1.05);
+}
+.import-modal__btn--cancel { color: var(--muted); }
+
 .toast {
   position: fixed;
   bottom: 1.5rem;
@@ -1111,3 +1188,4 @@ body {
   transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
+.toast.is-error { background: var(--danger); }
