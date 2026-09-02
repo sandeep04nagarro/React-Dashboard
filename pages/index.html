@@ -160,6 +160,23 @@
             <span class="toolbar__random-btn-icon" aria-hidden="true">🎲</span>
             <span class="toolbar__random-btn-label">Pick a random task</span>
           </button>
+          <div class="toolbar__io">
+            <button id="export-tasks" class="toolbar__io-btn" type="button" title="Export tasks as JSON">
+              <span class="toolbar__io-icon" aria-hidden="true">⬇</span>
+              <span class="toolbar__io-label">Export</span>
+            </button>
+            <button id="import-tasks" class="toolbar__io-btn" type="button" title="Import tasks from JSON">
+              <span class="toolbar__io-icon" aria-hidden="true">⬆</span>
+              <span class="toolbar__io-label">Import</span>
+            </button>
+            <input
+              id="import-file"
+              class="toolbar__io-file"
+              type="file"
+              accept="application/json,.json"
+              aria-label="Choose a JSON file to import"
+            />
+          </div>
         </div>
       </div>
 
@@ -335,6 +352,18 @@
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="import-modal-overlay" class="command-palette-overlay is-hidden" role="dialog" aria-modal="true" aria-label="Import options">
+      <div class="import-modal" role="document">
+        <h2 class="import-modal__title">Import Tasks</h2>
+        <p class="import-modal__desc">The selected file contains <strong id="import-modal-count">0</strong> valid task(s). Choose how to apply them:</p>
+        <div class="import-modal__actions">
+          <button id="import-modal-merge" class="import-modal__btn import-modal__btn--primary" type="button">Merge with existing tasks</button>
+          <button id="import-modal-replace" class="import-modal__btn" type="button">Replace all existing tasks</button>
+          <button id="import-modal-cancel" class="import-modal__btn import-modal__btn--cancel" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <script src="../js/script.js"></script>
   </body>

@@ -96,9 +96,14 @@
 
   const toastEl = $("toast");
   let toastTimer = null;
-  function showToast(message) {
+  // Display a transient toast notification; the optional `type` parameter toggles
+  // the "is-error" class so the same toast element can render success and error
+  // states without separate DOM nodes.
+  function showToast(message, type) {
     if (toastTimer) clearTimeout(toastTimer);
     toastEl.textContent = message;
+    toastEl.classList.remove("is-error");
+    if (type === "error") toastEl.classList.add("is-error");
     toastEl.classList.add("is-visible");
     toastTimer = setTimeout(() => {
       toastEl.classList.remove("is-visible");
@@ -1326,6 +1331,233 @@
   checkReminders();
   setInterval(checkReminders, 30000);
 
+  // --- Export / Import ---
+  const EXPORT_VERSION = 1;
+  const EXPORT_TYPE = "todo-app:export";
+  const exportBtn = $("export-tasks");
+  const importBtn = $("import-tasks");
+  const importFileInput = $("import-file");
+  const importModalOverlay = $("import-modal-overlay");
+  const importModalCount = $("import-modal-count");
+  const importModalMerge = $("import-modal-merge");
+  const importModalReplace = $("import-modal-replace");
+  const importModalCancel = $("import-modal-cancel");
+  let pendingImportTasks = null;
+
+  // Normalize a task object into a safe, serializable shape for export by
+  // validating each field's type, clamping values to known enums/lists, and
+  // supplying defaults for missing or invalid fields so the resulting JSON
+  // round-trips cleanly through `validateImportedTask`.
+  function sanitizeTaskForExport(t) {
+    return {
+      id: typeof t.id === "string" ? t.id : uid(),
+      text: typeof t.text === "string" ? t.text : "",
+      notes: typeof t.notes === "string" ? t.notes : "",
+      completed: !!t.completed,
+      priority: PRIORITIES.includes(t.priority) ? t.priority : "medium",
+      category: typeof t.category === "string" && t.category ? t.category : "general",
+      color: typeof t.color === "string" && COLOR_MAP[t.color] ? t.color : "",
+      dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
+      recurrence: RECURRENCES.includes(t.recurrence) ? t.recurrence : "",
+      recurrenceInterval: Number.isFinite(t.recurrenceInterval) ? t.recurrenceInterval : 1,
+      recurrenceAnchor: typeof t.recurrenceAnchor === "number" && t.recurrenceAnchor ? t.recurrenceAnchor : null,
+      reminders: Array.isArray(t.reminders) ? t.reminders.filter((r) => typeof r === "number" && r >= 0) : [],
+      favorite: !!t.favorite,
+      pinned: !!t.pinned,
+      manualOrder: Number.isFinite(t.manualOrder) ? t.manualOrder : null,
+      createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
+      completedAt: t.completed ? (typeof t.completedAt === "number" ? t.completedAt : null) : null,
+      subtasks: Array.isArray(t.subtasks)
+        ? t.subtasks.filter((s) => s && typeof s.id === "string" && typeof s.text === "string").map((s) => ({
+            id: s.id,
+            text: s.text,
+            completed: !!s.completed,
+          }))
+        : [],
+      dependsOn: Array.isArray(t.dependsOn) ? t.dependsOn.filter((d) => typeof d === "string") : [],
+    };
+  }
+
+  function exportTasks() {
+    if (!Array.isArray(todos) || todos.length === 0) {
+      showToast("No tasks to export", "error");
+      return;
+    }
+    const payload = {
+      type: EXPORT_TYPE,
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      count: todos.length,
+      tasks: todos.map(sanitizeTaskForExport),
+    };
+    let json;
+    try {
+      json = JSON.stringify(payload, null, 2);
+    } catch (e) {
+      showToast("Failed to serialize tasks for export", "error");
+      return;
+    }
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    a.href = url;
+    a.download = "todos-export-" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Exported " + todos.length + " task" + (todos.length === 1 ? "" : "s"));
+  }
+
+  function validateImportedTask(t, idx) {
+    if (!t || typeof t !== "object") {
+      throw new Error("Task #" + (idx + 1) + " is not an object");
+    }
+    if (typeof t.text !== "string" || !t.text.trim()) {
+      throw new Error("Task #" + (idx + 1) + " is missing a title");
+    }
+    const normalized = sanitizeTaskForExport(t);
+    normalized.id = typeof t.id === "string" && t.id ? t.id : uid();
+    if (t.recurrenceAnchor !== null && t.recurrenceAnchor !== undefined && !Number.isFinite(t.recurrenceAnchor)) {
+      normalized.recurrenceAnchor = null;
+    }
+    return normalized;
+  }
+
+  function validateImportedPayload(data) {
+    if (!data || typeof data !== "object") {
+      throw new Error("File is not a valid JSON object");
+    }
+    const isTasksArray = Array.isArray(data);
+    const isExportObject = !isTasksArray && Array.isArray(data.tasks);
+    if (!isTasksArray && !isExportObject) {
+      throw new Error("Expected a JSON file with a 'tasks' array or a list of tasks");
+    }
+    const rawTasks = isTasksArray ? data : data.tasks;
+    if (isExportObject && data.type && data.type !== EXPORT_TYPE) {
+      throw new Error("File type '" + data.type + "' is not supported");
+    }
+    const validated = rawTasks.map((t, i) => validateImportedTask(t, i));
+    return { tasks: validated, count: validated.length };
+  }
+
+  function applyImportedTasks(importedTasks, mode) {
+    const existingIds = new Set(todos.map((t) => t.id));
+    let added = 0;
+    let skipped = 0;
+    let replaced = 0;
+
+    if (mode === "replace") {
+      replaced = todos.length;
+      todos = importedTasks.slice();
+    } else {
+      const seen = new Set(existingIds);
+      importedTasks.forEach((t) => {
+        if (seen.has(t.id)) {
+          skipped++;
+          return;
+        }
+        seen.add(t.id);
+        todos.push(t);
+        added++;
+      });
+    }
+
+    normalizeManualOrder();
+    save();
+    render();
+
+    if (mode === "replace") {
+      showToast("Imported " + importedTasks.length + " task" + (importedTasks.length === 1 ? "" : "s") + " (replaced " + replaced + ")");
+    } else {
+      const msg = "Imported " + added + " task" + (added === 1 ? "" : "s") +
+        (skipped > 0 ? " (skipped " + skipped + " duplicate" + (skipped === 1 ? "" : "s") + ")" : "");
+      showToast(msg);
+    }
+  }
+
+  function openImportModal(tasks) {
+    pendingImportTasks = tasks;
+    importModalCount.textContent = String(tasks.length);
+    importModalOverlay.classList.remove("is-hidden");
+  }
+
+  function closeImportModal() {
+    pendingImportTasks = null;
+    importModalOverlay.classList.add("is-hidden");
+    importFileInput.value = "";
+  }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onerror = () => {
+      showToast("Failed to read the file", "error");
+      importFileInput.value = "";
+    };
+    reader.onload = (e) => {
+      let parsed;
+      try {
+        parsed = JSON.parse(e.target.result);
+      } catch (err) {
+        showToast("Invalid JSON: " + err.message, "error");
+        importFileInput.value = "";
+        return;
+      }
+      let validated;
+      try {
+        validated = validateImportedPayload(parsed);
+      } catch (err) {
+        showToast("Import failed: " + err.message, "error");
+        importFileInput.value = "";
+        return;
+      }
+      if (validated.count === 0) {
+        showToast("No tasks found in the file", "error");
+        importFileInput.value = "";
+        return;
+      }
+      openImportModal(validated.tasks);
+    };
+    reader.readAsText(file);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportTasks);
+  }
+  if (importBtn) {
+    importBtn.addEventListener("click", () => importFileInput.click());
+  }
+  if (importFileInput) {
+    importFileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      handleImportFile(file);
+    });
+  }
+  if (importModalMerge) {
+    importModalMerge.addEventListener("click", () => {
+      if (!pendingImportTasks) return;
+      applyImportedTasks(pendingImportTasks, "merge");
+      closeImportModal();
+    });
+  }
+  if (importModalReplace) {
+    importModalReplace.addEventListener("click", () => {
+      if (!pendingImportTasks) return;
+      applyImportedTasks(pendingImportTasks, "replace");
+      closeImportModal();
+    });
+  }
+  if (importModalCancel) {
+    importModalCancel.addEventListener("click", closeImportModal);
+  }
+  if (importModalOverlay) {
+    importModalOverlay.addEventListener("click", (e) => {
+      if (e.target === importModalOverlay) closeImportModal();
+    });
+  }
+
   // --- Command Palette ---
   const cmdOverlay = $("command-palette-overlay");
   const cmdInput = $("command-palette-input");
@@ -1349,6 +1581,8 @@
     { id: "sort-due", icon: "📅", label: "Sort: Due Date", shortcut: "", action() { setSort("due"); } },
     { id: "sort-alpha", icon: "🔤", label: "Sort: A-Z", shortcut: "", action() { setSort("alpha"); } },
     { id: "enable-notifications", icon: "🔔", label: "Enable Notifications", shortcut: "", action() { requestNotificationPermission(); } },
+    { id: "export-tasks", icon: "⬇", label: "Export Tasks as JSON", shortcut: "", action() { exportTasks(); } },
+    { id: "import-tasks", icon: "⬆", label: "Import Tasks from JSON", shortcut: "", action() { importFileInput.click(); } },
   ];
 
   function setFilter(filter) {

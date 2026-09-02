@@ -28,6 +28,7 @@ A simple, responsive todo application built with vanilla HTML, CSS, and JavaScri
 - **Productivity Analytics Dashboard** with stats, charts, and a monthly heatmap
 - **Task Dependencies & Subtasks**: break tasks into subtasks with progress tracking; set dependencies between tasks to block completion until prerequisites are met
 - **Random Task Picker**: pick a random active (or fallback to any) task from the current view to stay engaged; the selection is highlighted and scrolled into view
+- **Task Export & Import**: download all of your tasks (priority, category, color label, due date, recurrence, notes, reminders, subtasks, dependencies, favorite/pinned state, and timestamps) as a JSON file and re-import it later to merge with existing tasks or replace them entirely
 
 ## Productivity Dashboard
 
