@@ -96,6 +96,9 @@
 
   const toastEl = $("toast");
   let toastTimer = null;
+  // Display a transient toast notification; the optional `type` parameter toggles
+  // the "is-error" class so the same toast element can render success and error
+  // states without separate DOM nodes.
   function showToast(message, type) {
     if (toastTimer) clearTimeout(toastTimer);
     toastEl.textContent = message;
@@ -1341,6 +1344,10 @@
   const importModalCancel = $("import-modal-cancel");
   let pendingImportTasks = null;
 
+  // Normalize a task object into a safe, serializable shape for export by
+  // validating each field's type, clamping values to known enums/lists, and
+  // supplying defaults for missing or invalid fields so the resulting JSON
+  // round-trips cleanly through `validateImportedTask`.
   function sanitizeTaskForExport(t) {
     return {
       id: typeof t.id === "string" ? t.id : uid(),
